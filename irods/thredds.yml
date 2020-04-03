@@ -1,0 +1,46 @@
+---
+### iRODS ###
+# set default_file_mode to 640 in server_config.json
+
+### DOCKER ###
+# sudo yum install docker
+# sudo echo '{ "group": "dockerroot" }' > /etc/docker/daemon.json
+# sudo systemctl enable docker
+# sudo systemctl start docker
+
+### DOCKER-COMPOSE ###
+# sudo yum install python3-pip
+# sudo useradd --create-home --system \
+#   --comment 'THREDDS service' --home-dir /var/lib/thredds --groups dockerroot,irods \
+#   thredds
+# sudo --user thredds pip3 install --user docker-compose
+
+### THREDDS ###
+# scp compose.env thredds@ds-dev-rs-2:/var/lib/thredds/.
+# sudo mkdir -p /var/log/thredds
+# sudo chown thredds:thredds /var/log/thredds
+# sudo --user thredds ln --symbolic /var/log/thredds /var/lib/thredds/logs
+# scp tomcat-users.xml thredds@ds-dev-rs-2:/var/lib/thredds/.
+# sudo --user thredds mkdir --parents /var/lib/thredds/content
+# scp threddsConfig.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
+# scp wmsConfig.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
+# scp catalog.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
+# sudo --user irods mkdir --parents /mnt/ds-dev-rs-2/home/shared/terraref
+# sudo --user thredds mkdir --parents /var/lib/thredds/data
+# sudo --user thredds ln --symbolic /mnt/ds-dev-rs-2 /var/lib/thredds/data/iplant
+# sudo --user echo 'export THREDDS_COMPOSE_ENV_LOCAL=' >> /var/lib/thredds/.bash_profile
+# scp docker-compose.yml /var/lib/thredds
+
+# TODO get it to show data sets, i.e. adjust catalog.xml
+
+# TODO set up log rotation
+#   ??? logrotate or logadm ???
+
+# sudo --user thredds docker-compose up -d
+
+# TODO work with David to tune the configuration.
+
+# TODO consider security
+#   See https://www.unidata.ucar.edu/software/tds/v4.3/tds4.2/tutorial/Security.html
+
+# TODO set up HTTPS

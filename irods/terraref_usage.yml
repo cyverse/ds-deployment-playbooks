@@ -25,3 +25,14 @@
             permission: own
             object: "{{ _terraref_base_collection }}"
             recursive: true
+
+# TODO test
+- name: Install TDS
+  hosts: tds
+  become: "{{ _become_svc_acnt }}"
+  become_user: "{{ _irods_service_account_name }}"
+  tasks:
+    - name: install docker
+      package:
+        name: docker
+        state: present
