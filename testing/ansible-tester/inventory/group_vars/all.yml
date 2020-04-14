@@ -1,4 +1,6 @@
 ---
+canonical_hostname: dstesting_data.dstesting_default
+
 check_routes_timeout: 5
 
 irods_version: 4.1.10
