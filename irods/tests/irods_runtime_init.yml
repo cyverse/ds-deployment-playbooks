@@ -38,8 +38,18 @@
       changed_when: false
 
     - name: verify that rodsadmin has write permission on zone coll members
-      debug:
-        msg: TODO implement
+      shell: |
+        id=$(iquest '%s' "select USER_ID where USER_NAME = 'rodsadmin'")
+
+        iquest '%s' "select COLL_NAME where COLL_PARENT_NAME = '/testing'" \
+          | xargs -I '{}' --delimiter '\n' --max-args 1 \
+              iquest '%s' \
+                "select COLL_ID
+                 where COLL_NAME = '{}'
+                   and COLL_ACCESS_USER_ID = '$id'
+                   and COLL_ACCESS_NAME = 'modify object'" \
+          | grep --invert-match --quiet CAT_NO_ROWS_FOUND
+      changed_when: false
 
     - name: verify that rodsadmin has own permission on everthing else
       debug:
