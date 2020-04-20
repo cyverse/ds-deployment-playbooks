@@ -19,8 +19,10 @@ fi
 
 main()
 {
-  local baseDir=$(dirname "$ExecName")
-  local cfg="$@"
+  local cfg="$*"
+
+  local baseDir
+  baseDir=$(dirname "$ExecName")
 
   if [ -z "$cfg" ]
   then
@@ -33,11 +35,47 @@ main()
     cfg="$(pwd)"/"$cfg"
   fi
 
+  # shellcheck disable=SC1090
   . "$cfg"
+
+  if [[ ! -e ~/.rnd ]]
+  then
+    openssl rand -writerand ~/.rnd
+    trap 'rm --force ~/.rnd' EXIT
+  fi
+
+  mk_certs "$baseDir"
 
   docker build --file "$baseDir"/base/Dockerfile.centos6 --tag test-env-base:centos6 "$baseDir"
   docker build --file "$baseDir"/base/Dockerfile.centos7 --tag test-env-base:centos7 "$baseDir"
   docker-compose --file "$baseDir"/docker-compose.yml --project-name "$ENV_NAME" build
+}
+
+
+mk_certs()
+{
+  local baseDir="$1"
+
+  local name
+  for name in default custom
+  do
+    local key="$baseDir"/."$name".key
+    local crt="$baseDir"/."$name".crt
+
+    if [[ ! -e "$key" ]]
+    then
+      if ! openssl genpkey -algorithm rsa -out "$key" 2> /dev/null
+      then
+        printf 'failed to generate TLS key %s\n' "$key" >&2
+        return 1
+      fi
+    fi
+
+    if [[ ! -e "$crt" ]]
+    then
+      openssl req -batch -new -x509 -days 10000 -key "$key" -out "$crt"
+    fi
+  done
 }
 
 

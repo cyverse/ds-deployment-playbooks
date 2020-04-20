@@ -4,6 +4,8 @@ RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN yum --assumeyes install jq
 
+COPY .custom.key /etc/pki/tls/private/custom.key
+COPY .custom.crt /etc/pki/tls/certs/custom.crt
 COPY rs/scripts/service.sh.template /tmp/
 COPY rs/scripts/prep-svc-script.sh /tmp/prep-svc-script
 

@@ -77,7 +77,7 @@ install_debian_packages()
 
   apt-get update -qq
   apt-get install -qq -y apt-utils 2> /dev/null
-  
+
   apt-get install -qq -y \
     iptables jq openssh-server python-pip python-selinux python-virtualenv sudo
 }

@@ -2,11 +2,18 @@ FROM test-env-base:centos6
 
 RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+RUN yum --assumeyes install jq
+
+COPY .default.key /etc/pki/tls/private/server.key
+COPY .default.crt /etc/pki/tls/certs/server-chain.crt
+COPY rs/scripts/prep-svc-script.sh /tmp/prep-svc-script
+COPY rs/scripts/service.sh.template /tmp/
+
 RUN yum --assumeyes install \
-      jq libselinux-python python-pip python-requests python-virtualenv \
+      python-pip python-requests python-virtualenv \
       https://files.renci.org/pub/irods/releases/4.1.10/centos6/irods-resource-4.1.10-centos6-x86_64.rpm
 
-COPY rs/scripts/* /tmp/
+COPY rs/scripts/config-irods.sh /tmp/config-irods
 
 ARG IRODS_CONTROL_PLANE_KEY=TEMPORARY__32byte_ctrl_plane_key
 ARG IRODS_CONTROL_PLANE_PORT=1248
@@ -26,7 +33,7 @@ ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
 
-RUN /tmp/config-irods.sh
-RUN /tmp/prep-svc-script.sh
+RUN /tmp/config-irods
+RUN /tmp/prep-svc-script
 
 CMD [ "/service.sh" ]

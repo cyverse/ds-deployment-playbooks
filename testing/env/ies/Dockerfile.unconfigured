@@ -4,6 +4,8 @@ RUN yum install --assumeyes epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN yum install --assumeyes jq python-pip
 
+COPY .default.key /etc/pki/tls/private/server.key
+COPY .default.crt /etc/pki/tls/certs/server-chain.crt
 COPY ies/scripts/prep-svc-script.sh /tmp/prep-svc-script
 COPY ies/scripts/service.sh.template /tmp/
 

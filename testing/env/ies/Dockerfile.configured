@@ -4,14 +4,16 @@ RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN yum install --assumeyes jq python-pip
 
-COPY ies/scripts/prep-svc-script.sh /tmp/prep-svc-script
+COPY .default.key /etc/pki/tls/private/server.key
+COPY .default.crt /etc/pki/tls/certs/server-chain.crt
 COPY ies/scripts/service.sh.template /tmp/
+COPY ies/scripts/prep-svc-script.sh /tmp/prep-svc-script
 
 RUN yum --assumeyes install \
+      moreutils python-virtualenv \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-icat-4.1.10-centos7-x86_64.rpm
 RUN yum --assumeyes install \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-database-plugin-postgres-1.10-centos7-x86_64.rpm
-RUN yum --assumeyes install moreutils python-virtualenv
 RUN pip install pika
 
 COPY ies/config/ipc-housekeeping.re /etc/irods/
