@@ -5,7 +5,9 @@
   tasks:
     - name: test common packages installed
       package_facts:
-      failed_when: "['dmidecode', 'jq', 'python-requests'] is not subset(ansible_facts.packages)"
+      failed_when: >
+        ['dmidecode', 'jq', 'openssl', 'python-requests', 'python-virtualenv']
+        is not subset(ansible_facts.packages)
 
     - name: test EPEL repo installed
       when: ansible_distribution == 'CentOS'
@@ -14,10 +16,6 @@
           - "'epel-release' in ansible_facts.packages"
 
     - name: test pip installed
-      debug:
-        msg: TODO implement
-
-    - name: test python-virtualenv installed
       debug:
         msg: TODO implement
 
