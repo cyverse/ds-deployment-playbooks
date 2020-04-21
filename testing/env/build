@@ -56,6 +56,8 @@ mk_certs()
 {
   local baseDir="$1"
 
+  local ca="$baseDir"/.ca.pem
+
   local name
   for name in default custom
   do
@@ -64,6 +66,8 @@ mk_certs()
 
     if [[ ! -e "$key" ]]
     then
+      rm --force "$crt"
+
       if ! openssl genpkey -algorithm rsa -out "$key" 2> /dev/null
       then
         printf 'failed to generate TLS key %s\n' "$key" >&2
@@ -73,9 +77,15 @@ mk_certs()
 
     if [[ ! -e "$crt" ]]
     then
+      rm --force "$ca"
       openssl req -batch -new -x509 -days 10000 -key "$key" -out "$crt"
     fi
   done
+
+  if [[ ! -e "$ca" ]]
+  then
+    cat "$baseDir"/.custom.crt "$baseDir"/.default.crt > "$ca"
+  fi
 }
 
 

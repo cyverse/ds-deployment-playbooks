@@ -6,6 +6,7 @@ RUN yum --assumeyes install jq
 
 COPY .default.key /etc/pki/tls/private/server.key
 COPY .default.crt /etc/pki/tls/certs/server-chain.crt
+COPY .ca.pem /etc/pki/tls/certs/irods-ca-bundle.pem
 COPY rs/scripts/prep-svc-script.sh /tmp/prep-svc-script
 COPY rs/scripts/service.sh.template /tmp/
 
