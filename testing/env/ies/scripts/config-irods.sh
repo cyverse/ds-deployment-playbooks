@@ -38,6 +38,8 @@
 # IRODS_ZONE_USER             The main rodsadmin user.
 
 
+set -e
+
 readonly CfgDir=/etc/irods
 readonly DbCfg="$CfgDir"/database_config.json
 readonly ServerCfg="$CfgDir"/server_config.json
@@ -67,6 +69,9 @@ main()
 
   mkdir --parents --mode=0700 "$EnvDir"
   ensure_ownership "$EnvDir"
+
+  openssl genpkey -genparam \
+    -algorithm DH -pkeyopt dh_paramgen_prime_len:4096 -out "$EnvDir"/dhparams.pem
 
   mk_irods_env
   ensure_ownership "$EnvCfg"

@@ -11,7 +11,7 @@ COPY ies/scripts/service.sh.template /tmp/
 COPY ies/scripts/prep-svc-script.sh /tmp/prep-svc-script
 
 RUN yum --assumeyes install \
-      moreutils python-virtualenv \
+      moreutils openssl python-virtualenv \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-icat-4.1.10-centos7-x86_64.rpm
 RUN yum --assumeyes install \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-database-plugin-postgres-1.10-centos7-x86_64.rpm
