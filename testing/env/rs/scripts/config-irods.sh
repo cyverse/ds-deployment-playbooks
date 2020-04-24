@@ -4,35 +4,44 @@
 #
 # It requires the following environment variables to be defined.
 #
-# IRODS_CONTROL_PLANE_KEY     The encryption key required for communicating with
-#                             the grid control plane.
-# IRODS_CONTROL_PLANE_PORT    The port on which the control plane operates.
-# IRODS_DEFAULT_RESOURCE      The name of the default resource to use
-# IRODS_DEFAULT_VAULT         The absolute path to the vault of the resource
-#                             server.
-# IRODS_FIRST_EPHEMERAL_PORT  The beginning of the port range available for
-#                             parallel transfer and reconnections.
-# IRODS_HOST                  The FQDN or IP address of the server being
-#                             configured.
-# IRODS_IES                   The FQDN or IP address of the IES.
-# IRODS_LAST_EPHEMERAL_PORT   The end of the port range available for parallel
-#                             transfer and reconnections.
-# IRODS_NEGOTIATION_KEY       The shared encryption key used by the zone in
-#                             advanced negotiation handshake a the beginning of
-#                             a client connection
-# IRODS_SCHEMA_VALIDATION     The URI for the schema used to validate the
-#                             configuration files or 'off'.
-# IRODS_SYSTEM_GROUP          The system group for the iRODS process
-# IRODS_SYSTEM_USER           The system user for the iRODS process
-# IRODS_ZONE_KEY              The shared secred used for authentication during
-#                             server-to-server communication
-# IRODS_ZONE_NAME             The name of the iRODS zone.
-# IRODS_ZONE_PASSWORD         The password used to authenticate the
-#                             IRODS_ZONE_USER user.
-# IRODS_ZONE_PORT             The main TCP port used by the zone for
-#                             communication.
-# IRODS_ZONE_USER             The main rodsadmin user.
+# IRODS_CONTROL_PLANE_KEY           The encryption key required for
+#                                   communicating with the grid control plane.
+# IRODS_CONTROL_PLANE_PORT          The port on which the control plane operates
+# IRODS_DEFAULT_RESOURCE            The name of the default resource to use
+# IRODS_DEFAULT_VAULT               The absolute path to the vault of the
+#                                   resource server.
+# IRODS_FIRST_EPHEMERAL_PORT        The beginning of the port range available
+#                                   for parallel transfer and reconnections.
+# IRODS_HOST                        The FQDN or IP address of the server being
+#                                   configured.
+# IRODS_IES                         The FQDN or IP address of the IES.
+# IRODS_LAST_EPHEMERAL_PORT         The end of the port range available for
+#                                   parallel transfer and reconnections.
+# IRODS_NEGOTIATION_KEY             The shared encryption key used by the zone
+#                                   in advanced negotiation handshake a the
+#                                   beginning of a client connection
+# IRODS_SCHEMA_VALIDATION           The URI for the schema used to validate the
+#                                   configuration files or 'off'.
+# IRODS_SSL_CA_CERTIFICATE_FILE     The location of the file of trusted CA
+#                                   certificates
+# IRODS_SSL_CERTIFICATE_CHAIN_FILE  The file containing the server's TLS
+#                                   certificate chain.
+# IRODS_SSL_CERTIFICATE_KEY_FILE    The file contain the server's TLS private
+#                                   key
+# IRODS_SSL_DH_PARAMS_FILE          The location of the Diffie-Hellman parameter
+#                                   file location.
+# IRODS_SYSTEM_GROUP                The system group for the iRODS process
+# IRODS_SYSTEM_USER                 The system user for the iRODS process
+# IRODS_ZONE_KEY                    The shared secred used for authentication
+#                                   during server-to-server communication
+# IRODS_ZONE_NAME                   The name of the iRODS zone.
+# IRODS_ZONE_PASSWORD               The password used to authenticate the
+#                                   IRODS_ZONE_USER user.
+# IRODS_ZONE_PORT                   The main TCP port used by the zone for
+#                                   communication.
+# IRODS_ZONE_USER                   The main rodsadmin user.
 
+set -o errexit -o nounset -o pipefail
 
 readonly CfgDir=/etc/irods
 readonly ServerCfg="$CfgDir"/server_config.json
@@ -64,8 +73,20 @@ main()
   populate_server_cfg
   ensure_ownership "$ServerCfg"
 
-  mkdir --parents --mode=0700 "$EnvDir"
+  mkdir --parents "$EnvDir"
+  chmod --recursive u=rwx "$EnvDir"
   ensure_ownership "$EnvDir"
+
+  printf 'Generating Diffie-Hellman parameters\n'
+  openssl genpkey -genparam \
+      -algorithm DH -pkeyopt dh_paramgen_prime_len:4096 -out "$IRODS_SSL_DH_PARAMS_FILE" \
+    2>&1
+  local ec="$?"
+  if [[ "$ec" -ne 0 ]]
+  then
+    printf 'Failed to generate DH parameters file %s\n' "$IRODS_SSL_DH_PARAMS_FILE" >&2
+    return 1
+  fi
 
   mk_irods_env
   ensure_ownership "$EnvCfg"
@@ -93,10 +114,8 @@ get_cfg_field()
 
 mk_irods_env()
 {
-  local algorithm
+  local algorithm numRounds
   algorithm=$(get_cfg_field "$ServerCfg" server_control_plane_encryption_algorithm)
-
-  local numRounds
   numRounds=$(get_cfg_field "$ServerCfg" server_control_plane_encryption_num_hash_rounds)
 
   printf '{}' > "$EnvCfg"
@@ -119,6 +138,13 @@ mk_irods_env()
   set_cfg_field "$EnvCfg" integer irods_server_control_plane_encryption_num_hash_rounds "$numRounds"
   set_cfg_field "$EnvCfg" string irods_server_control_plane_key "$IRODS_CONTROL_PLANE_KEY"
   set_cfg_field "$EnvCfg" integer irods_server_control_plane_port "$IRODS_CONTROL_PLANE_PORT"
+  set_cfg_field "$EnvCfg" string irods_ssl_ca_certificate_file "$IRODS_SSL_CA_CERTIFICATE_FILE"
+
+  set_cfg_field \
+    "$EnvCfg" string irods_ssl_certificate_chain_file "$IRODS_SSL_CERTIFICATE_CHAIN_FILE"
+
+  set_cfg_field "$EnvCfg" string irods_ssl_certificate_key_file "$IRODS_SSL_CERTIFICATE_KEY_FILE"
+  set_cfg_field "$EnvCfg" string irods_ssl_dh_params_file "$IRODS_SSL_DH_PARAMS_FILE"
   set_cfg_field "$EnvCfg" integer irods_transfer_buffer_size_for_parallel_transfer_in_megabytes 4
   set_cfg_field "$EnvCfg" string irods_user_name "$IRODS_ZONE_USER"
   set_cfg_field "$EnvCfg" string irods_zone_name "$IRODS_ZONE_NAME"
@@ -182,7 +208,7 @@ validate_32_byte_key()
   local keyName="$2"
 
   # check length (must equal 32)
-  if [ ${#keyVal} -ne 32 ]
+  if [[ ${#keyVal} -ne 32 ]]
   then
     printf '%s needs to be 32 bytes long\n' "$keyName" >&2
     return 1
@@ -190,6 +216,4 @@ validate_32_byte_key()
 }
 
 
-set -e
-
-main
+main "#@"

@@ -4,21 +4,33 @@
 # deletes ansible-tester, all of the images composing env, and the base image
 # ansible-support.
 
+set -o errexit -o nounset -o pipefail
 
-if [[ "$OSTYPE" == "darwin"* ]]
-then
-  readonly ExecName=$(greadlink -f "$0")
-else
-  readonly ExecName=$(readlink --canonicalize "$0")
-fi
+
+resolve_exec()
+{
+  local exe="$0"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
+}
+
+
+readonly ExecName=$(resolve_exec "$0")
+
 
 main()
 {
-  local baseDir=$(dirname "$ExecName")
+  local baseDir
+  baseDir=$(dirname "$ExecName")
 
   "$baseDir"/ansible-tester/clean
   "$baseDir"/env/clean "$baseDir"/config.inc
 }
 
 
-main
+main "$@"

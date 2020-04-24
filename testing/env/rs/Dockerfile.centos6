@@ -4,17 +4,8 @@ RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
 RUN yum --assumeyes install jq
 
-COPY .custom.key /etc/pki/tls/private/custom.key
-COPY .custom.crt /etc/pki/tls/certs/custom.crt
-COPY .ca.pem /etc/pki/tls/certs/irods-ca-bundle.pem
 COPY rs/scripts/prep-svc-script.sh /tmp/prep-svc-script
 COPY rs/scripts/service.sh.template /tmp/
-
-RUN yum --assumeyes install \
-      python-pip python-requests python-virtualenv \
-      https://files.renci.org/pub/irods/releases/4.1.10/centos6/irods-resource-4.1.10-centos6-x86_64.rpm
-
-COPY rs/scripts/config-irods.sh /tmp/config-irods
 
 ARG IRODS_CONTROL_PLANE_KEY=TEMPORARY__32byte_ctrl_plane_key
 ARG IRODS_CONTROL_PLANE_PORT=1248
@@ -26,6 +17,10 @@ ARG IRODS_IES=ies
 ARG IRODS_LAST_EPHEMERAL_PORT=20199
 ARG IRODS_NEGOTIATION_KEY=TEMPORARY_32byte_negotiation_key
 ARG IRODS_SCHEMA_VALIDATION=https://schemas.irods.org/configuration
+ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
+ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
+ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
+ARG IRODS_SSL_DH_PARAMS_FILE=/var/lib/irods/.irods/dhparams.pem
 ARG IRODS_SYSTEM_GROUP=irods
 ARG IRODS_SYSTEM_USER=irods
 ARG IRODS_ZONE_KEY=TEMPORARY_zone_key
@@ -33,6 +28,16 @@ ARG IRODS_ZONE_NAME=tempZone
 ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
+
+COPY .custom.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .custom.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
+COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
+
+RUN yum --assumeyes install \
+      openssl python-pip python-requests python-virtualenv \
+      https://files.renci.org/pub/irods/releases/4.1.10/centos6/irods-resource-4.1.10-centos6-x86_64.rpm
+
+COPY rs/scripts/config-irods.sh /tmp/config-irods
 
 RUN /tmp/config-irods
 RUN /tmp/prep-svc-script

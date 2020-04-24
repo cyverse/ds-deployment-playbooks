@@ -18,10 +18,12 @@
 # IRODS_SYSTEM_GROUP   The default group of the service account
 # IRODS_ZONE_PASSWORD  The password used to authenticate the clerver user
 
+set -o errexit -o nounset -o pipefail
+
 
 main()
 {
-  if [ "$#" -lt 1 ]
+  if [[ "$#" -lt 1 ]]
   then
     printf 'Requires either "start" or "stop" as its first parameter\n' >&2
     return 1
@@ -48,7 +50,7 @@ start()
 {
   # Ensure that the correct user owns everything in /var/lib/irods and /etc/irods
   # If this isn't done, some of the ansible ownership tests will fail.
-  if [ -e /var/lib/irods/.irods/irods_environment.json ]
+  if [[ -e /var/lib/irods/.irods/irods_environment.json ]]
   then
     chown --recursive "$IRODS_SYSTEM_USER":"$IRODS_SYSTEM_GROUP" /etc/irods /var/lib/irods
 
@@ -84,7 +86,5 @@ stop()
   fi
 }
 
-
-set -e
 
 main "$@"

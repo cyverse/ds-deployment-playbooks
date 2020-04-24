@@ -9,13 +9,24 @@
 #
 # Deletes the four docker images.
 
+set -o errexit -o nounset -o pipefail
 
-if [[ "$OSTYPE" == "darwin"* ]]
-then
-  readonly ExecName=$(greadlink -f "$0")
-else
-  readonly ExecName=$(readlink --canonicalize "$0")
-fi
+
+resolve_exec()
+{
+  local exe="$0"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
+}
+
+
+readonly ExecName=$(resolve_exec "$0")
+
 
 main()
 {
@@ -24,7 +35,7 @@ main()
   local baseDir
   baseDir=$(dirname "$ExecName")
 
-  if [ -z "$cfg" ]
+  if [[ -z "$cfg" ]]
   then
     printf 'An environment variable include file is needed.\n' >&2
     return 1
@@ -38,6 +49,7 @@ main()
   # shellcheck disable=SC1090
   . "$cfg"
 
+  local repository rest
   while read -r repository rest
   do
     docker rmi "$repository"

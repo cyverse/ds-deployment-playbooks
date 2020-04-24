@@ -4,17 +4,21 @@ RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN yum --assumeyes install jq
 
-COPY .custom.key /etc/pki/tls/private/custom.key
-COPY .custom.crt /etc/pki/tls/certs/custom.crt
-COPY .ca.pem /etc/pki/tls/certs/irods-ca-bundle.pem
 COPY rs/scripts/service.sh.template /tmp/
 COPY rs/scripts/prep-svc-script.sh /tmp/prep-svc-script
 
 ARG IRODS_IES=ies
+ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
+ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
+ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
 ARG IRODS_SYSTEM_GROUP=irods
 ARG IRODS_SYSTEM_USER=irods
 ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
+
+COPY .default.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .default.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
+COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
 
 RUN /tmp/prep-svc-script
 

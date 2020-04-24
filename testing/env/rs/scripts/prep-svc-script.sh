@@ -10,6 +10,8 @@
 # IRODS_ZONE_PASSWORD  The password used to authenticate the clever user.
 # IRODS_ZONE_PORT      The main TCP port used by the zone for communication.
 
+set -e
+
 
 main()
 {
@@ -42,5 +44,4 @@ EOF
 }
 
 
-set -e
 main

@@ -4,21 +4,8 @@ RUN yum --assumeyes install epel-release
 RUN rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN yum install --assumeyes jq python-pip
 
-COPY .default.key /etc/pki/tls/private/server.key
-COPY .default.crt /etc/pki/tls/certs/server-chain.crt
-COPY .ca.pem /etc/pki/tls/certs/irods-ca-bundle.pem
 COPY ies/scripts/service.sh.template /tmp/
 COPY ies/scripts/prep-svc-script.sh /tmp/prep-svc-script
-
-RUN yum --assumeyes install \
-      moreutils openssl python-virtualenv \
-      https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-icat-4.1.10-centos7-x86_64.rpm
-RUN yum --assumeyes install \
-      https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-database-plugin-postgres-1.10-centos7-x86_64.rpm
-RUN pip install pika
-
-COPY ies/config/ipc-housekeeping.re /etc/irods/
-COPY ies/scripts/config-irods.sh /tmp/
 
 ARG DB_NAME=ICAT
 ARG DB_PASSWORD=testpassword
@@ -34,6 +21,10 @@ ARG IRODS_HOST=ies
 ARG IRODS_LAST_EPHEMERAL_PORT=20199
 ARG IRODS_NEGOTIATION_KEY=TEMPORARY_32byte_negotiation_key
 ARG IRODS_SCHEMA_VALIDATION=https://schemas.irods.org/configuration
+ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
+ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
+ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
+ARG IRODS_SSL_DH_PARAMS_FILE=/var/lib/irods/.irods/dhparams.pem
 ARG IRODS_SYSTEM_GROUP=irods
 ARG IRODS_SYSTEM_USER=irods
 ARG IRODS_ZONE_KEY=TEMPORARY_zone_key
@@ -41,6 +32,20 @@ ARG IRODS_ZONE_NAME=tempZone
 ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
+
+COPY .default.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .default.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
+COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
+
+RUN yum --assumeyes install \
+      moreutils openssl python-virtualenv \
+      https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-icat-4.1.10-centos7-x86_64.rpm
+RUN yum --assumeyes install \
+      https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-database-plugin-postgres-1.10-centos7-x86_64.rpm
+RUN pip install pika
+
+COPY ies/config/ipc-housekeeping.re /etc/irods/
+COPY ies/scripts/config-irods.sh /tmp/
 
 RUN /tmp/config-irods.sh
 RUN /tmp/prep-svc-script

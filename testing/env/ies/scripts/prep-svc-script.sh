@@ -10,23 +10,13 @@
 # IRODS_SYSTEM_USER    The system user for the iRODS process
 # IRODS_ZONE_PASSWORD  The password used to authenticate the clever user.
 
+set -o errexit -o nounset -o pipefail
+
 
 main()
 {
   expand_tmpl > /service.sh
   chmod a+rx /service.sh
-}
-
-
-# escapes / and \ for sed script
-escape()
-{
-  local var="$*"
-
-  # Escape \ first to avoid escaping the escape character, i.e. avoid / -> \/ -> \\/
-  var="${var//\\/\\\\}"
-
-  printf '%s' "${var//\//\\/}"
 }
 
 
@@ -42,5 +32,16 @@ EOF
 }
 
 
-set -e
-main
+# escapes / and \ for sed script
+escape()
+{
+  local var="$*"
+
+  # Escape \ first to avoid escaping the escape character, i.e. avoid / -> \/ -> \\/
+  var="${var//\\/\\\\}"
+
+  printf '%s' "${var//\//\\/}"
+}
+
+
+main "$@"

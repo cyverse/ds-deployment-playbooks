@@ -9,19 +9,28 @@
 #
 # Starts or stops all of the containers.
 
+set -o errexit -o nounset -o pipefail
 
-if [[ "$OSTYPE" == "darwin"* ]]
-then
-  readonly ExecName=$(greadlink -f "$0")
-else
-  readonly ExecName=$(readlink --canonicalize "$0")
-fi
+
+resolve_exec()
+{
+  local exe="$0"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
+}
+
+
+readonly ExecName=$(resolve_exec "$0")
+
 
 main()
 {
-  local baseDir=$(dirname "$ExecName")
-
-  if [ "$#" -lt 1 ]
+  if [[ "$#" -lt 1 ]]
   then
     printf 'An environment variable include file is required as its first parameter.\n' >&2
     return 1
@@ -29,7 +38,7 @@ main()
 
   local cfg="$1"
 
-  if [ "$#" -lt 2 ]
+  if [[ "$#" -lt 2 ]]
   then
     printf 'Requires either "start" or "stop" as its second parameter.\n' >&2
     return 1
@@ -37,19 +46,24 @@ main()
 
   local action="$2"
 
+  local baseDir
+  baseDir=$(dirname "$ExecName")
+
   if ! [[ "$cfg" =~ ^/ ]]
   then
     cfg="$(pwd)"/"$cfg"
   fi
 
+  # shellcheck disable=SC1090
   . "$cfg"
 
+  local dcCmd
   case "$action" in
     start)
-      local dcCmd='up -d'
+      dcCmd='up -d'
       ;;
     stop)
-      local dcCmd='down --remove-orphans --volumes'
+      dcCmd='down --remove-orphans --volumes'
       ;;
     *)
       printf 'Unknown command "%s"\n' "$action" >&2
@@ -60,7 +74,5 @@ main()
   docker-compose --file "$baseDir"/docker-compose.yml --project-name "$ENV_NAME" $dcCmd
 }
 
-
-set -e
 
 main "$@"

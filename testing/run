@@ -1,14 +1,6 @@
 #!/bin/bash
 
 
-if [[ "$OSTYPE" == "darwin"* ]]
-then
-  readonly ExecName=$(greadlink -f "$0")
-else
-  readonly ExecName=$(readlink --canonicalize "$0")
-fi
-
-
 show_help()
 {
   cat <<EOF
@@ -65,28 +57,52 @@ EOF
 }
 
 
+set -o errexit -o nounset -o pipefail
+
+
+resolve_exec()
+{
+  local exe="$0"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
+}
+
+
+readonly ExecName=$(resolve_exec "$0")
 readonly BaseDir=$(dirname "$ExecName")
 readonly Cfg="$BaseDir"/config.inc
 readonly DefaultHosts=hosts-all
 readonly DefaultPlaybook=main.yml
 
+# shellcheck disable=SC1090
+. "$Cfg"
+
 
 main()
 {
-  local doInspect=false
-  local hosts="$DefaultHosts"
-  local pretty=false
-
   local opts
-  opts=$(parse_cmd_line "$@")
+  if ! opts=$(parse_cmd_line "$@")
+  then
+    show_help >&2
+    return 1
+  fi
+
   eval set -- "$opts"
+
+  local doInspect playbookInput pretty
+  local hosts="$DefaultHosts"
 
   while true
   do
     case "$1" in
       -h|--help)
         show_help
-        exit 0
+        return 0
         ;;
       -I|--inventory-hosts)
         hosts="$2"
@@ -97,7 +113,7 @@ main()
         shift
         ;;
       -P|--playbook)
-        local playbookInput="$2"
+        playbookInput="$2"
         shift 2
         ;;
       -p|--pretty)
@@ -109,23 +125,23 @@ main()
         break
         ;;
       *)
-        exit_with_help
+        show_help >&2
+        return 1
         ;;
     esac
   done
 
-  if [ "$#" -lt 1 ]
+  if [[ "$#" -lt 1 ]]
   then
-    exit_with_help
+    show_help >&2
+    return 1
   fi
 
-  local playbooks
+  local playbook playbooks
   playbooks=$(resolve_playbook_dir "$1")
+  playbook=$(resolve_playbook "$playbooks" "${playbookInput-}")
 
-  local playbook
-  playbook=$(resolve_playbook "$playbooks" "$playbookInput")
-
-  do_run "$doInspect" "$pretty" "$playbooks" "$playbook" "$hosts"
+  do_run "${doInspect-}" "${pretty-}" "$playbooks" "$playbook" "$hosts"
 }
 
 
@@ -146,36 +162,18 @@ do_run()
 }
 
 
-exit_with_help()
-{
-  show_help >&2
-  exit 1
-}
-
-
 parse_cmd_line()
 {
-  local opts
   if [[ "$OSTYPE" == "darwin"* ]]
   then
-    #shellcheck disable=SC2048,SC2086
-    opts=$(getopt hiI:P:p $*)
+    getopt hiI:P:p "$*"
   else
-    opts=$(getopt --longoptions help,inspect,inventory-hosts:,playbook:,pretty \
-                  --options hiI:P:p \
-                  --name "$ExecName" \
-                  -- \
-                  "$@")
+    getopt \
+      --longoptions help,inspect,inventory-hosts:,playbook:,pretty \
+      --options hiI:P:p \
+      --name "$ExecName" \
+      -- "$@"
   fi
-
-  local ret="$?"
-
-  if [ "$ret" -ne 0 ]
-  then
-    exit_with_help
-  fi
-
-  printf '%s' "$opts"
 }
 
 
@@ -191,10 +189,10 @@ resolve_playbook()
     playbook="$playbook".yml
   fi
 
-  if ! [ -f "$playbooks"/"$playbook" ]
+  if ! [[ -f "$playbooks"/"$playbook" ]]
   then
     printf 'The playbook %s/%s does not exist\n' "$playbooks" "$playbook" >&2
-    exit 1
+    return 1
   fi
 
   printf '%s' "$playbook"
@@ -210,19 +208,14 @@ resolve_playbook_dir()
     playbooks="$(pwd)"/"$playbooks"
   fi
 
-  if ! [ -d "$playbooks" ]
+  if ! [[ -d "$playbooks" ]]
   then
     printf '%s is not a directory\n' "$playbooks" >&2
-    exit 1
+    return 1
   fi
 
   printf '%s' "$playbooks"
 }
 
-
-set -e
-
-# shellcheck disable=SC1090
-. "$Cfg"
 
 main "$@"
