@@ -152,8 +152,6 @@ acDeleteCollByAdminIfPresent(*ParColl, *ChildColl) {
   }
 }
 
-acPreConnect(*OUT) { ipc_acPreConnect(*OUT); }
-
 acSetNumThreads { ipc_acSetNumThreads; }
 
 acSetRescSchemeForCreate { replSetRescSchemeForCreate; }

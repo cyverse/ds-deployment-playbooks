@@ -44,7 +44,7 @@ _irods_clerver_password: "{{ irods_clerver_password if irods_clerver_password is
 
 _irods_clerver_user: "{{ irods_clerver_user if irods_clerver_user is defined else 'rods' }}"
 
-_irods_client_server_policy: CS_NEG_REFUSE
+_irods_client_server_policy: CS_NEG_REQUIRE
 
 _irods_default_dir_mode: "{{ irods_default_dir_mode if irods_default_dir_mode is defined else
                              '0750' }}"
@@ -112,6 +112,15 @@ _irods_service_account_name: "{{
 _irods_service_group_name: "{{
   irods_service_group_name if irods_service_group_name is defined else
   _irods_service_account_name }}"
+
+_irods_ssl_ca_certificate_file: "{{ irods_ssl_ca_certificate_file | default(None) }}"
+_irods_ssl_certificate_chain_file: "{{
+  irods_ssl_certificate_chain_file |
+  default('/etc/pki/tls/certs/server-chain.crt') }}"
+_irods_ssl_certificate_key_file: "{{
+  irods_ssl_certificate_key_file | default('/etc/pki/tls/private/server.key') }}"
+_irods_ssl_dh_params_file: /var/lib/irods/.irods/dhparams.pem
+_irods_ssl_verify_server: cert
 
 _irods_storage_resources: "{{
   irods_storage_resources if irods_storage_resources is defined else [] }}"

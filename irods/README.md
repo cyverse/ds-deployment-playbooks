@@ -63,6 +63,9 @@ Variable                                   | Default                            
 `irods_server_port_range_start`            | 20000                                |         | the first address in the range of auxillary TCP and UDP ports
 `irods_service_account_name`               | irods                                |         | the system account used to run the iRODS server processes
 `irods_service_group_name`                 | `irods_service_account_name`         |         | the system group used to run the iRODS server processes
+`irods_ssl_ca_certificate_file`            | null                                 |         | the file containing and additional set of trusted certificates
+`irods_ssl_certificate_chain_file`         | /etc/pki/tls/certs/server-chain.crt  |         | the file containing the server's TLS certificate chain
+`irods_ssl_certificate_key_file`           | /etc/pki/tls/private/server.key      |         | private key corresponding to the TLS certificate chain
 `irods_storage_resources`                  | `[]`                                 |         | a list of storage resources hosted on the server being configured, _see below_
 `irods_version`                            | 4.1.11                               |         | the version of iRODS to work with
 `irods_zone_key`                           | TEMPORARY_zone_key                   |         | the zone key

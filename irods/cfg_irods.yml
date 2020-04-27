@@ -40,6 +40,15 @@
       notify:
         - reload rules
 
+    - name: ensure /var/lib/irods/.irods exists
+      file:
+        path: /var/lib/irods/.irods
+        state: directory
+
+    - name: generate Diffie-Hellman parameters
+      openssl_dhparam:
+        path: "{{ _irods_ssl_dh_params_file }}"
+
     - name: generate configuration files
       import_role:
         name: cyverse.irods-cfg
@@ -86,6 +95,11 @@
         irods_cfg_server_control_plane_port: "{{ _irods_server_control_plane_port }}"
         irods_cfg_server_port_range_end: "{{ _irods_server_port_range_end }}"
         irods_cfg_server_port_range_start: "{{ _irods_server_port_range_start }}"
+        irods_cfg_ssl_ca_certificate_file: "{{ _irods_ssl_ca_certificate_file }}"
+        irods_cfg_ssl_certificate_chain_file: "{{ _irods_ssl_certificate_chain_file }}"
+        irods_cfg_ssl_certificate_key_file: "{{ _irods_ssl_certificate_key_file }}"
+        irods_cfg_ssl_dh_params_file: "{{ _irods_ssl_dh_params_file }}"
+        irods_cfg_ssl_verify_server: "{{ _irods_ssl_verify_server }}"
         irods_cfg_system_account_name: "{{ _irods_service_account_name }}"
         irods_cfg_system_group_name: "{{ _irods_service_group_name }}"
         irods_cfg_transfer_buffer_size_for_parallel_transfer: "{{

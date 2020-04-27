@@ -50,6 +50,18 @@
         - terraref.re
         - terraref-env.re
 
+    - name: Verify /var/lib/irods/.irods exists
+      stat:
+        path: /var/lib/irods/.irods
+      register: response
+      failed_when: not response.stat.exists
+      
+    - name: Verify DH parameters file is in place
+      stat:
+        path: /var/lib/irods/.irods/dhparams.pem
+      register: response
+      failed_when: not response.stat.exists
+
     - name: Verify irods_environment.json is in place
       stat:
         path: /var/lib/irods/.irods/irods_environment.json
@@ -98,9 +110,13 @@
       assert:
         that:
           - irods_environment.irods_client_server_negotiation == 'request_server_negotiation'
-          - irods_environment.irods_client_server_policy == 'CS_NEG_REFUSE'
+          - irods_environment.irods_client_server_policy == 'CS_NEG_REQUIRE'
           - irods_environment.irods_default_hash_scheme == 'MD5'
           - irods_environment.irods_default_resource == 'rs_centos6'
+          - 'irods_environment.irods_ssl_ca_certificate_file
+               == "/etc/pki/tls/certs/irods-ca-bundle.pem"'
+          - irods_environment.irods_ssl_dh_params_file == '/var/lib/irods/.irods/dhparams.pem'
+          - irods_environment.irods_ssl_verify_server == 'cert'
           - irods_environment.irods_user_name == 'rods'
           - irods_environment.irods_zone_name == 'testing'
 
@@ -110,6 +126,14 @@
           '/usr/pgsql-9.3/lib/psqlodbca.so' if ansible_distribution_major_version == '6' else
           '/usr/lib64/psqlodbc.so'}}"
       block:
+        - name: verify IES irods_environment.json has correct TLS contents
+          assert:
+            that:
+              - "irods_environment.irods_ssl_certificate_chain_file
+                   == '/etc/pki/tls/certs/server-chain.crt'"
+              - "irods_environment.irods_ssl_certificate_key_file
+                   == '/etc/pki/tls/private/server.key'"
+
         - name: retrieve encoded server_config.json
           slurp:
             src: /etc/irods/server_config.json
@@ -173,6 +197,12 @@
 
     - when: inventory_hostname in groups['rs']
       block:
+        - name: verify resource server irods_environment.json has correct TLS contents
+          assert:
+            that:
+              - irods_environment.irods_ssl_certificate_chain_file == '/etc/pki/tls/certs/rs.crt'
+              - irods_environment.irods_ssl_certificate_key_file == '/etc/pki/tls/private/rs.key'
+
         - name: retrieve encoded server_config.json
           slurp:
             src: /etc/irods/server_config.json
