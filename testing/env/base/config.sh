@@ -8,7 +8,8 @@
 #  VERSION  the major version of the OS to configure.
 #
 # This script configures the common ansible requirements
-#
+
+set -e
 
 
 main()
@@ -67,7 +68,7 @@ install_centos_packages()
   local version="$1"
 
   rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-"$version"
-  yum --assumeyes install iptables-services libselinux-python openssh-server sudo
+  yum --assumeyes install iptables-services libselinux-python openssh-server sudo which
 }
 
 
@@ -91,7 +92,5 @@ s/#?PermitEmptyPasswords no/PermitEmptyPasswords yes/
 EOF
 }
 
-
-set -e
 
 main "$@"
