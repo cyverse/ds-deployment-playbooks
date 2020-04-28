@@ -57,6 +57,10 @@
         irods_cfg_server_port_range_start: 20000
         irods_cfg_service_account_name: "{{ _irods_service_account_name }}"
         irods_cfg_service_group_name: "{{ _irods_service_group_name }}"
+        irods_cfg_ssl_certificate_chain_file: /etc/irods/server-chain.crt
+        irods_cfg_ssl_certificate_key_file: /etc/irods/server.key
+        irods_cfg_ssl_dh_params_file: /var/lib/irods/.irods/dhparams.pem
+        irods_cfg_ssl_verify_server: cert
         irods_cfg_transfer_buffer_size_for_parallel_transfer: "{{
           _irods_parallel_transfer_buffer_size }}"
         irods_cfg_validate: false
@@ -134,8 +138,8 @@
         tag: "{{ ansible_date_time.iso8601_basic_short }}"
         force_source: true
       register: response
-      changed_when: |
-        response is succeeded 
+      changed_when: >
+        response is succeeded
         and (previous_id is not defined or response.image.Id != previous_id)
       tags:
         - no_testing

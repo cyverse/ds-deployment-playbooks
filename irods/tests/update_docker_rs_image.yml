@@ -29,19 +29,23 @@
           - include_group_vars_yaml == 'yaml'
           - include_group_vars_yml == 'yml'
 
-    - debug:
-        msg: TODO test build_plugins.yml
+    - import_tasks: tasks/test_build_plugins.yml
 
     - name: test create command scripts staging directory
-      debug:
-        msg: TODO implement
+      stat:
+        path: /tmp/cmd
+      register: response
+      failed_when: not response.stat.exists or not response.stat.isdir
 
     - name: test add common command scripts
       debug:
         msg: TODO implement
 
     - debug:
-        msg: TODO import cyverse.irods-cfg
+        msg: TODO test import cyverse.irods-cfg
+
+    - debug:
+        msg: TODO test generate Diffie-Hellman parameters
 
     - name: test stage dynamic rule bases
       debug:
