@@ -13,13 +13,13 @@ RUN yum --assumeyes install \
     yum --assumeyes install \
       /tmp/irods-api-plugin-netcdf-1.0-centos7.rpm \
       /tmp/irods-icommands-netcdf-1.0-centos7.rpm \
-      /tmp/irods-microservice-plugin-netcdf-1.0-centos7.rpm
+      /tmp/irods-microservice-plugin-netcdf-1.0-centos7.rpm && \
 ### Install support for UUID generation
     yum --assumeyes install uuidd && \
 ### Install support for periphery script
     yum --assumeyes install moreutils && \
 ### Create Diffie-Hellman parameters
-    yum --assumeyes openssl && \
+    yum --assumeyes install openssl && \
     openssl genpkey -genparam \
         -algorithm DH -pkeyopt dh_paramgen_prime_len:4096 \
         -out /var/lib/irods/.irods/dhparams.pem \
@@ -31,22 +31,22 @@ RUN yum --assumeyes install \
     mkdir /irods_vault
 
 ### Install Set AVU plugin
-COPY --chown irods:irods \
+COPY --chown=irods:irods \
   irods-setavu-plugin/libraries/centos7/libmsiSetAVU.so /var/lib/irods/plugins/microservices
 
 ### Install cmd scripts
-COPY --chown irods:irods cmd/* /var/lib/irods/iRODS/server/bin/cmd/
+COPY --chown=irods:irods cmd/* /var/lib/irods/iRODS/server/bin/cmd/
 RUN chmod ug+x /var/lib/irods/iRODS/server/bin/cmd/*
 
 ### Install iRODS configuration files
-COPY --chown irods:irods etc/irods/* /etc/irods/
-COPY --chown irods:irods var/lib/irods/.irods/* /var/lib/irods/.irods
+COPY --chown=irods:irods etc/irods/* /etc/irods/
+COPY --chown=irods:irods var/lib/irods/.irods/* /var/lib/irods/.irods
 RUN chmod --recursive ug+r /var/lib/irods && \
 ### Ensure /etc/irods/, .irods/, and log/ are group writeable
     chmod --recursive ug+rw /etc/irods/ /var/lib/irods/.irods /var/lib/irods/iRODS/server/log
 
 ### Add script to handle start and stop extras
-COPY --chown irods:irods periphery.sh /periphery
+COPY --chown=irods:irods periphery.sh /periphery
 RUN chmod ug+x /periphery
 
 VOLUME /etc/irods/server-chain.crt
