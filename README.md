@@ -14,4 +14,4 @@ If the control machine runs linux, `dmidecode` needs to be installed for `gather
 `irods/tasks/build_dummy_rpm.yml` to work.
 
 The following python packages are required on the control machine for `docker_image_info` to work:
-`docker-py`, `requests`, and `urllib3`. They should be installed using `pip`.
+`docker-py`, `netaddr`, `requests`, and `urllib3`. They should be installed using `pip`.
