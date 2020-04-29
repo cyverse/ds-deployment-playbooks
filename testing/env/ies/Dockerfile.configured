@@ -38,7 +38,7 @@ COPY .default.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
 
 RUN yum --assumeyes install \
-      moreutils openssl python-virtualenv \
+      moreutils openssl python-virtualenv which \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-icat-4.1.10-centos7-x86_64.rpm
 RUN yum --assumeyes install \
       https://files.renci.org/pub/irods/releases/4.1.10/centos7/irods-database-plugin-postgres-1.10-centos7-x86_64.rpm

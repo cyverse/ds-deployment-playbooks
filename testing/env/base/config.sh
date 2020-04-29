@@ -9,7 +9,7 @@
 #
 # This script configures the common ansible requirements
 
-set -e
+set -o errexit -o nounset -o pipefail
 
 
 main()
@@ -68,7 +68,7 @@ install_centos_packages()
   local version="$1"
 
   rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-"$version"
-  yum --assumeyes install iptables-services libselinux-python openssh-server sudo which
+  yum --assumeyes install iptables-services libselinux-python openssh-server sudo
 }
 
 

@@ -34,7 +34,7 @@ COPY .custom.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
 
 RUN yum --assumeyes install \
-      openssl python-pip python-requests python-virtualenv \
+      openssl python-pip python-requests python-virtualenv which \
       https://files.renci.org/pub/irods/releases/4.1.10/centos6/irods-resource-4.1.10-centos6-x86_64.rpm
 
 COPY rs/scripts/config-irods.sh /tmp/config-irods
