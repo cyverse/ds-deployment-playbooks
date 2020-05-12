@@ -1,2 +1,2 @@
 ---
-load_balancer_stats_certificate: /etc/haproxy/certs/dumb.pem
+load_balancer_stats_certificate: /etc/pki/tls/private/dstesting_default.pem

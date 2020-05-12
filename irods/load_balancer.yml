@@ -27,6 +27,17 @@
       tags:
         - no_testing
 
+    - name: install stats TLS key and certificate
+      when: _tls_key != ''
+      copy:
+        content: "{{ _tls_key }}{{ _tls_cert }}{{ _tls_intermediate_certs }}"
+        dest: "{{ _load_balancer_stats_certificate }}"
+
+    - name: ensure /etc/haproxy/certs gone
+      file:
+        path: /etc/haproxy/certs
+        state: absent
+
     - name: configure rsyslog to listen on UDP socket
       blockinfile:
         path: /etc/rsyslog.conf

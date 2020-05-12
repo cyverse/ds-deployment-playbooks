@@ -100,6 +100,9 @@ Variable                                   | Default                            
 `terraref_base_collection`                 |                                      |         | The base collection for the TerraREF project. If it isn't present no TerraREF rules will fire.
 `terraref_manager`                         | `irods_clerver_user`                 |         | The iRODS user who is responsible for TerraREF data.
 `terraref_resource_hierarchy`              | `irods_resource_hierarchies[0]`      |         | The resource used by the TerraREF project.
+`tls_cert`                                 |                                      |         | The TLS certificate contents. If this is undefined or empty, it is assumed the certificate file is provided externally.
+`tls_intermediate_certs`                   |                                      |         | The TLS certificate chain contents for the provider of the `tls_cert` and `tls_key`. If this is undefined or empty, it is assumed the chain file is provided externally.
+`tls_key`                                  |                                      |         | The TLS private key contents. If this is undefined or empty, it is assumed the key file is provided externally.
 `webdav_auth_name`                         | CyVerse                              |         | Authorization realm to use for the Data Store
 `webdav_cache_dir`                         | `/var/cache/httpd/proxy`             |         | the directory apache will use for the WebDAV cache
 `webdav_cache_max_file_size`               | 1                                    |         | the maximum size in mebibytes of the largest WebDAV file apache will cache

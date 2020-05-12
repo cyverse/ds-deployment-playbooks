@@ -2,7 +2,32 @@
 - name: test install HAProxy
   hosts: load_balancer
   become: true
+  vars:
+    pemFile: /etc/pki/tls/private/dstesting_default.pem
   tasks:
+    - name: test install stats TLS key and certificate
+      shell: |
+        firstLine=$(head --lines 1 '{{ pemFile }}')
+        if [[ "$firstLine" != '-----BEGIN PRIVATE KEY-----' ]]
+        then
+          exit 1
+        fi
+
+        lastLine=$(tail --lines 1 '{{ pemFile }}')
+        if [[ "$lastLine" != '-----END CERTIFICATE-----' ]]
+        then
+          exit 1
+        fi
+
+        printf -v sep '-----END PRIVATE KEY-----\n-----BEGIN CERTIFICATE-----'
+        grep --quiet "$sep" '{{ pemFile }}'
+
+    - name: test ensure /etc/haproxy/certs gone
+      stat:
+        path: /etc/haproxy/certs
+      register: result
+      failed_when: result.stat.exists
+
     - name: test configure rsyslog to listen on UDP socket
       shell: |
         printf -v expSettings '$ModLoad imudp\n$UDPServerRun 514\n$UDPServerAddress 127.0.0.1'
