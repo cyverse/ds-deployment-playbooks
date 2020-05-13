@@ -18,7 +18,7 @@
 #  IRODS_IES_HOST   The host name of the iRODS IES to connect to
 #  IRODS_ZONE_NAME  The name of the iRODS zone inside the testing environment
 
-set -e
+set -o errexit -o nounset -o pipefail
 
 
 main()
@@ -33,6 +33,7 @@ main()
              --env IRODS_HOST="$IRODS_IES_HOST" \
              --env IRODS_ZONE_NAME="$IRODS_ZONE_NAME" \
              --env PGHOST="$DBMS_HOST" \
+             --hostname=control \
              --network "$DOMAIN" \
              --volume "$playbooks":/playbooks-under-test:ro \
              ansible-tester "$doInspect" "$pretty" "$playbook" "$hosts"

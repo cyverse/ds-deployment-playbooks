@@ -167,6 +167,24 @@
       tags:
         - no_testing
 
+    - name: install TLS key
+      when: _tls_key != ''
+      copy:
+        content: "{{ _tls_key }}"
+        dest: "{{ _webdav_tls_key_file }}"
+
+    - name: install TLS certificate
+      when: _tls_cert != ''
+      copy:
+        content: "{{ _tls_cert }}"
+        dest: "{{ _webdav_tls_cert_file }}"
+
+    - name: install TLS intermediate certificates
+      when: _tls_intermediate_certs != ''
+      copy:
+        content: "{{ _tls_intermediate_certs }}"
+        dest: "{{ _webdav_tls_chain_file }}"
+      
     - name: install mod_proxy_html
       package:
         name: mod_proxy_html

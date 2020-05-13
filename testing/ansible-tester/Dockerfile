@@ -34,3 +34,10 @@ ENV PGPASSWORD=testpassword
 ENV PGUSER=irods
 
 ENTRYPOINT [ "/test-playbook" ]
+
+RUN openssl genpkey -algorithm rsa -out /etc/pki/CA/private/cacert.pem
+RUN openssl req -new -nodes -sha256 -x509 \
+      -days 10000 \
+      -key /etc/pki/CA/private/cacert.pem \
+      -out /etc/pki/CA/cacertpem \
+      -subj /CN=control.dstesting_default
