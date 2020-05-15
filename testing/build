@@ -19,16 +19,80 @@ resolve_exec()
 }
 
 
-readonly ExecName=$(resolve_exec "$0")
-
-
 main()
 {
+  local execName
+  execName=$(resolve_exec "$0")
+
   local baseDir
-  baseDir=$(dirname "$ExecName")
+  baseDir=$(dirname "$execName")
+
+  # shellcheck disable=SC1090
+  . "$baseDir"/config.inc
+
+  local workDir="$baseDir"/.working
+  mkdir --parents "$workDir"
+
+  local buildSslCnf="$workDir"/openssl.cnf
+  local controlDir="$baseDir"/ansible-tester/.pki
+  prep_ca "$buildSslCnf" "$controlDir"
 
   "$baseDir"/env/build "$baseDir"/config.inc
   "$baseDir"/ansible-tester/build
+}
+
+
+prep_ca()
+{
+  local buildSslCnf="$1"
+  local controlDir="$2"
+
+  local caDir="$controlDir"/CA
+  mkdir --parents "$caDir"/certs "$caDir"/newcerts "$caDir"/private
+
+  if ! [[ -e "$buildSslCnf" ]]
+  then
+    sed 's|_CA_DIR_|'"$caDir"'|' "$baseDir"/openssl.tmpl > "$buildSslCnf"
+  fi
+
+  local controlSslCnf="$controlDir"/openssl.cnf
+  if ! [[ -e "$controlSslCnf" ]]
+  then
+    sed 's|_CA_DIR_|/etc/pki/CA|' "$baseDir"/openssl.tmpl > "$controlSslCnf"
+  fi
+
+  touch -a "$caDir"/index.txt "$caDir"/index.txt.attr
+
+  if ! [[ -e "$caDir"/serial ]]
+  then
+    echo 1000 > "$caDir"/serial
+  fi
+
+  local caKey="$caDir"/private/ca.key
+  if ! [[ -e "$caKey" ]]
+  then
+    if ! openssl genpkey -algorithm rsa -out "$caKey" 2> /dev/null
+    then
+      printf 'Failed to build private key for certificate authority\n' >&2
+      return 1
+    fi
+  fi
+
+  chmod u=r "$caKey"
+
+  local caCrt="$caDir"/certs/ca.crt
+  if ! [[ -e "$caCrt" ]]
+  then
+    openssl req -new -sha256 -x509 \
+      -config "$buildSslCnf" \
+      -days 10000 \
+      -extensions v3_ca \
+      -key "$caKey" \
+      -out "$caCrt" \
+      -subj /CN="$CA_HOSTNAME"."$DOMAIN"
+  fi
+
+  chmod a=r "$caCrt"
 }
 
 

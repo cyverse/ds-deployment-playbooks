@@ -12,7 +12,8 @@ fi
 
 main()
 {
-  local baseDir=$(dirname "$ExecName")
+  local baseDir
+  baseDir=$(dirname "$ExecName")
 
   docker build --tag ansible-tester "$baseDir"
 }

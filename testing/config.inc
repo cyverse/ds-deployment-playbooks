@@ -3,6 +3,8 @@
 export ENV_NAME=dstesting
 export DOMAIN="$ENV_NAME"_default
 
+export CA_HOSTNAME=control
+
 export DBMS_HOST="$ENV_NAME"_dbms_1."$DOMAIN"
 
 export IRODS_IES_SYSTEM_GROUP=irods_ies

@@ -23,6 +23,10 @@ COPY wait-for-ready.yml /
 
 VOLUME /playbooks-under-test
 
+### Set up certificate authority
+COPY .pki/openssl.cnf /etc/pki/tls/
+COPY .pki/CA/ /etc/pki/CA/
+
 ENV IRODS_HOST=ies
 ENV IRODS_PASSWORD=rods
 ENV IRODS_PORT=1247
@@ -34,10 +38,3 @@ ENV PGPASSWORD=testpassword
 ENV PGUSER=irods
 
 ENTRYPOINT [ "/test-playbook" ]
-
-RUN openssl genpkey -algorithm rsa -out /etc/pki/CA/private/cacert.pem
-RUN openssl req -new -nodes -sha256 -x509 \
-      -days 10000 \
-      -key /etc/pki/CA/private/cacert.pem \
-      -out /etc/pki/CA/cacertpem \
-      -subj /CN=control.dstesting_default

@@ -20,16 +20,18 @@ resolve_exec()
 }
 
 
-readonly ExecName=$(resolve_exec "$0")
-
-
 main()
 {
+  local execName
+  execName=$(resolve_exec "$0")
+
   local baseDir
-  baseDir=$(dirname "$ExecName")
+  baseDir=$(dirname "$execName")
 
   "$baseDir"/ansible-tester/clean
   "$baseDir"/env/clean "$baseDir"/config.inc
+
+  rm --force --recursive "$baseDir"/ansible-tester/.pki "$baseDir"/.working
 }
 
 
