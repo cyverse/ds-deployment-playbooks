@@ -60,6 +60,8 @@ services:
     build:
       context: .
       dockerfile: haproxy/Dockerfile
+      args:
+        DOMAIN: "$DOMAIN"
     depends_on:
       - apache
       - ies
