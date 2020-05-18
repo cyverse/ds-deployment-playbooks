@@ -22,8 +22,6 @@
 #                                   beginning of a client connection
 # IRODS_SCHEMA_VALIDATION           The URI for the schema used to validate the
 #                                   configuration files or 'off'.
-# IRODS_SSL_CA_CERTIFICATE_FILE     The location of the file of trusted CA
-#                                   certificates
 # IRODS_SSL_CERTIFICATE_CHAIN_FILE  The file containing the server's TLS
 #                                   certificate chain.
 # IRODS_SSL_CERTIFICATE_KEY_FILE    The file contain the server's TLS private
@@ -138,7 +136,6 @@ mk_irods_env()
   set_cfg_field "$EnvCfg" integer irods_server_control_plane_encryption_num_hash_rounds "$numRounds"
   set_cfg_field "$EnvCfg" string irods_server_control_plane_key "$IRODS_CONTROL_PLANE_KEY"
   set_cfg_field "$EnvCfg" integer irods_server_control_plane_port "$IRODS_CONTROL_PLANE_PORT"
-  set_cfg_field "$EnvCfg" string irods_ssl_ca_certificate_file "$IRODS_SSL_CA_CERTIFICATE_FILE"
 
   set_cfg_field \
     "$EnvCfg" string irods_ssl_certificate_chain_file "$IRODS_SSL_CERTIFICATE_CHAIN_FILE"
@@ -216,4 +213,4 @@ validate_32_byte_key()
 }
 
 
-main "#@"
+main "$@"

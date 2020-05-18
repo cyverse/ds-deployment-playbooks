@@ -13,6 +13,7 @@ ARG DB_USER=irods
 ARG DBMS_HOST=dbms
 ARG DBMS_PORT=5432
 ARG DBMS_TYPE=postgres
+ARG DOMAIN=dstesting_default
 ARG IRODS_CONTROL_PLANE_KEY=TEMPORARY__32byte_ctrl_plane_key
 ARG IRODS_CONTROL_PLANE_PORT=1248
 ARG IRODS_DEFAULT_RESOURCE=demoResc
@@ -21,7 +22,6 @@ ARG IRODS_HOST=ies
 ARG IRODS_LAST_EPHEMERAL_PORT=20199
 ARG IRODS_NEGOTIATION_KEY=TEMPORARY_32byte_negotiation_key
 ARG IRODS_SCHEMA_VALIDATION=https://schemas.irods.org/configuration
-ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
 ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
 ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
 ARG IRODS_SSL_DH_PARAMS_FILE=/var/lib/irods/.irods/dhparams.pem
@@ -33,9 +33,8 @@ ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
 
-COPY .default.key $IRODS_SSL_CERTIFICATE_KEY_FILE
-COPY .default.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
-COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
+COPY .tls/$DOMAIN.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .tls/"$DOMAIN"-chain.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 
 RUN yum --assumeyes install \
       moreutils openssl python-virtualenv which \

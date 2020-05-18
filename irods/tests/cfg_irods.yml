@@ -55,7 +55,7 @@
         path: /var/lib/irods/.irods
       register: response
       failed_when: not response.stat.exists
-      
+
     - name: Verify DH parameters file is in place
       stat:
         path: /var/lib/irods/.irods/dhparams.pem
@@ -113,8 +113,6 @@
           - irods_environment.irods_client_server_policy == 'CS_NEG_REQUIRE'
           - irods_environment.irods_default_hash_scheme == 'MD5'
           - irods_environment.irods_default_resource == 'rs_centos6'
-          - 'irods_environment.irods_ssl_ca_certificate_file
-               == "/etc/pki/tls/certs/irods-ca-bundle.pem"'
           - irods_environment.irods_ssl_dh_params_file == '/var/lib/irods/.irods/dhparams.pem'
           - irods_environment.irods_ssl_verify_server == 'cert'
           - irods_environment.irods_user_name == 'rods'
@@ -130,9 +128,9 @@
           assert:
             that:
               - "irods_environment.irods_ssl_certificate_chain_file
-                   == '/etc/pki/tls/certs/server-chain.crt'"
+                   == '/etc/pki/tls/certs/dstesting_default-chain.crt'"
               - "irods_environment.irods_ssl_certificate_key_file
-                   == '/etc/pki/tls/private/server.key'"
+                   == '/etc/pki/tls/private/dstesting_default.key'"
 
         - name: retrieve encoded server_config.json
           slurp:
@@ -197,12 +195,6 @@
 
     - when: inventory_hostname in groups['rs']
       block:
-        - name: verify resource server irods_environment.json has correct TLS contents
-          assert:
-            that:
-              - irods_environment.irods_ssl_certificate_chain_file == '/etc/pki/tls/certs/rs.crt'
-              - irods_environment.irods_ssl_certificate_key_file == '/etc/pki/tls/private/rs.key'
-
         - name: retrieve encoded server_config.json
           slurp:
             src: /etc/irods/server_config.json
@@ -238,6 +230,14 @@
 
     - when: inventory_hostname == 'dstesting_rs_centos6_1.dstesting_default'
       block:
+        - name: verify resource server irods_environment.json has correct TLS contents
+          assert:
+            that:
+              - "irods_environment.irods_ssl_certificate_chain_file
+                   == '/etc/pki/tls/certs/custom-chain.crt'"
+              - "irods_environment.irods_ssl_certificate_key_file
+                   == '/etc/pki/tls/private/custom.key'"
+
         - name: retrieve encoded hosts_config.json
           slurp:
             src: /etc/irods/hosts_config.json
@@ -255,3 +255,13 @@
                   == 'dstesting_rs_centos6_1.dstesting_default'"
               - hosts_config.host_entries[0].addresses[1].address == 'alias-1'
               - hosts_config.host_entries[0].addresses[2].address == 'alias-2'
+
+    - when: inventory_hostname == 'dstesting_rs_centos7_1.dstesting_default'
+      block:
+        - name: verify resource server irods_environment.json has correct TLS contents
+          assert:
+            that:
+              - "irods_environment.irods_ssl_certificate_chain_file
+                   == '/etc/pki/tls/certs/dstesting_default-chain.crt'"
+              - "irods_environment.irods_ssl_certificate_key_file
+                   == '/etc/pki/tls/private/dstesting_default.key'"

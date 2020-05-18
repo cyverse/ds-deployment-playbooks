@@ -9,16 +9,15 @@ COPY ies/scripts/service.sh.template /tmp/
 
 ARG DBMS_HOST=dbms
 ARG DBMS_PORT=5432
-ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
+ARG DOMAIN=dstesting_default
 ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
 ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
 ARG IRODS_SYSTEM_GROUP=irods
 ARG IRODS_SYSTEM_USER=irods
 ARG IRODS_ZONE_PASSWORD=rods
 
-COPY .default.key $IRODS_SSL_CERTIFICATE_KEY_FILE
-COPY .default.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
-COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
+COPY .tls/$DOMAIN.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .tls/"$DOMAIN"-chain.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 
 RUN /tmp/prep-svc-script
 

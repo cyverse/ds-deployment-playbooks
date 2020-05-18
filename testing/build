@@ -5,18 +5,7 @@
 
 set -o errexit -o nounset -o pipefail
 
-
-resolve_exec()
-{
-  local exe="$0"
-
-  if [[ "$OSTYPE" == "darwin"* ]]
-  then
-    greadlink -f "$exe"
-  else
-    readlink --canonicalize "$exe"
-  fi
-}
+export DOMAIN
 
 
 main()
@@ -30,15 +19,96 @@ main()
   # shellcheck disable=SC1090
   . "$baseDir"/config.inc
 
-  local workDir="$baseDir"/.working
-  mkdir --parents "$workDir"
-
-  local buildSslCnf="$workDir"/openssl.cnf
+  local sslTmpl="$baseDir"/openssl.tmpl
+  local buildSslCnf="$baseDir"/.openssl.cnf
   local controlDir="$baseDir"/ansible-tester/.pki
+  local envDir="$baseDir"/env/.tls
+
+  if [[ "$sslTmpl" -nt "$buildSslCnf" ]]
+  then
+    rm --force --recursive "$controlDir" "$envDir"
+    sed 's|_CA_DIR_|'"$controlDir"'/CA|' "$sslTmpl" > "$buildSslCnf"
+  fi
+
+  if [[ "$baseDir"/config.inc -nt "$envDir" ]]
+  then
+    rm --force --recursive "$controlDir" "$envDir"
+  fi
+
+  mkdir --parents "$controlDir"
   prep_ca "$buildSslCnf" "$controlDir"
 
+  mkdir --parents "$envDir"
+  mk_tls_pair "$buildSslCnf" "$envDir" "$DOMAIN"
+  mk_tls_pair "$buildSslCnf" "$envDir" custom
+
+  cp --force --update $controlDir/CA/certs/ca.crt "$envDir"/
   "$baseDir"/env/build "$baseDir"/config.inc
   "$baseDir"/ansible-tester/build
+}
+
+
+mk_tls_pair()
+{
+  local sslCnf="$1"
+  local tlsDir="$2"
+  local domain="$3"
+
+  local domainKey="$tlsDir"/"$domain".key
+  local domainCsr="$tlsDir"/"$domain".csr
+  local domainCrt="$tlsDir"/"$domain".crt
+
+  if ! [[ -e "$domainKey" ]]
+  then
+    rm --force "$domainCsr" "$domainCrt"
+    if ! openssl genpkey -algorithm rsa -out "$domainKey" 2> /dev/null
+    then
+      printf 'Failed to build private TLS key for %s domain\n' "$domain" >&2
+      return 1
+    else
+      printf 'Created private TLS key for %s domain\n' "$domain"
+    fi
+  fi
+
+  chmod a=r "$domainKey"
+
+  if [[ "$sslCnf" -nt "$domainCsr" ]] || [[ "$domainKey" -nt "$domainCsr" ]]
+  then
+    openssl req -new -sha256 \
+      -config "$sslCnf" -key "$domainKey" -out "$domainCsr" -subj /CN="$domain"
+
+    printf 'Created certificate request for %s domain\n' "$domain"
+  fi
+
+  if [[ "$sslCnf" -nt "$domainCrt" ]] || [[ "$domainCsr" -nt "$domainCrt" ]]
+  then
+    if ! mk_tls_cert "$sslCnf" "$domainCsr" "$domainCrt"
+    then
+      printf 'Failed to create certificate for %s domain\n' "$domain" >&2
+      return 1
+    else
+      printf 'Created certificate for %s domain\n' "$domain"
+    fi
+  fi
+
+  chmod a=r "$domainCrt"
+}
+
+
+mk_tls_cert()
+{
+  local sslCnf="$1"
+  local csr="$2"
+  local crt="$3"
+
+  openssl ca -batch -notext \
+      -config "$sslCnf" \
+      -days 10000 \
+      -extensions server_cert \
+      -in "$csr" \
+      -md sha256 \
+      -out "$crt" \
+    2> /dev/null
 }
 
 
@@ -48,40 +118,41 @@ prep_ca()
   local controlDir="$2"
 
   local caDir="$controlDir"/CA
+  local controlSslCnf="$controlDir"/openssl.cnf
+  if [[ "$baseDir"/openssl.tmpl -nt "$controlSslCnf" ]]
+  then
+    rm --force --recursive "$caDir"
+    sed 's|_CA_DIR_|/etc/pki/CA|' "$baseDir"/openssl.tmpl > "$controlSslCnf"
+    printf 'Updated openssl.cnf for CA\n'
+  fi
+
   mkdir --parents "$caDir"/certs "$caDir"/newcerts "$caDir"/private
 
-  if ! [[ -e "$buildSslCnf" ]]
-  then
-    sed 's|_CA_DIR_|'"$caDir"'|' "$baseDir"/openssl.tmpl > "$buildSslCnf"
-  fi
-
-  local controlSslCnf="$controlDir"/openssl.cnf
-  if ! [[ -e "$controlSslCnf" ]]
-  then
-    sed 's|_CA_DIR_|/etc/pki/CA|' "$baseDir"/openssl.tmpl > "$controlSslCnf"
-  fi
-
-  touch -a "$caDir"/index.txt "$caDir"/index.txt.attr
-
-  if ! [[ -e "$caDir"/serial ]]
-  then
-    echo 1000 > "$caDir"/serial
-  fi
-
   local caKey="$caDir"/private/ca.key
+  local caCrt="$caDir"/certs/ca.crt
+  local serial="$caDir"/serial
+  local index="$caDir"/index.txt
+  local idxAttr="$caDir"/index.txt.attr
+
   if ! [[ -e "$caKey" ]]
   then
+    rm --force "$caCrt" "$serial" "$index" "$idxAttr"
+    echo 1000 > "$serial"
+    touch "$index" "$idxAttr"
+    printf 'Reset CA DB\n'
+
     if ! openssl genpkey -algorithm rsa -out "$caKey" 2> /dev/null
     then
       printf 'Failed to build private key for certificate authority\n' >&2
       return 1
+    else
+      printf 'Recreated private key for CA\n'
     fi
   fi
 
   chmod u=r "$caKey"
 
-  local caCrt="$caDir"/certs/ca.crt
-  if ! [[ -e "$caCrt" ]]
+  if [[ "$caKey" -nt "$caCrt" ]]
   then
     openssl req -new -sha256 -x509 \
       -config "$buildSslCnf" \
@@ -89,10 +160,25 @@ prep_ca()
       -extensions v3_ca \
       -key "$caKey" \
       -out "$caCrt" \
-      -subj /CN="$CA_HOSTNAME"."$DOMAIN"
+      -subj /CN="$CA_NAME"."$DOMAIN"
+
+    printf 'Recreated certificate for CA\n'
   fi
 
   chmod a=r "$caCrt"
+}
+
+
+resolve_exec()
+{
+  local exe="$0"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
 }
 
 

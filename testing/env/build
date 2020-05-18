@@ -11,6 +11,8 @@
 
 set -o errexit -o nounset -o pipefail
 
+export DOMAIN
+
 
 resolve_exec()
 {
@@ -25,15 +27,15 @@ resolve_exec()
 }
 
 
-readonly ExecName=$(resolve_exec "$0")
-
-
 main()
 {
   local cfg="$*"
 
+  local execName
+  execName=$(resolve_exec "$0")
+
   local baseDir
-  baseDir=$(dirname "$ExecName")
+  baseDir=$(dirname "$execName")
 
   if [[ -z "$cfg" ]]
   then
@@ -49,13 +51,8 @@ main()
   # shellcheck disable=SC1090
   . "$cfg"
 
-  if [[ ! -e ~/.rnd ]]
-  then
-    openssl rand -writerand ~/.rnd
-    trap 'rm --force ~/.rnd' EXIT
-  fi
-
-  mk_certs "$baseDir"
+  mk_cert_forms "$baseDir"/.tls "$DOMAIN"
+  mk_cert_forms "$baseDir"/.tls custom
 
   docker build --file "$baseDir"/base/Dockerfile.centos6 --tag test-env-base:centos6 "$baseDir"
   docker build --file "$baseDir"/base/Dockerfile.centos7 --tag test-env-base:centos7 "$baseDir"
@@ -63,42 +60,32 @@ main()
 }
 
 
-mk_certs()
+mk_cert_forms()
 {
-  local baseDir="$1"
+  local workDir="$1"
+  local domain="$2"
 
-  local ca="$baseDir"/.ca.pem
+  local domainKey="$workDir"/"$domain".key
+  local domainCrt="$workDir"/"$domain".crt
+  local caCrt="$workDir"/ca.crt
+  local chainCrt="$workDir"/"$domain"-chain.crt
+  local pem="$workDir"/"$domain".pem
 
-  local name
-  for name in default custom
-  do
-    local key="$baseDir"/."$name".key
-    local crt="$baseDir"/."$name".crt
-
-    if [[ ! -e "$key" ]]
-    then
-      rm --force "$crt"
-
-      if ! openssl genpkey -algorithm rsa -out "$key" 2> /dev/null
-      then
-        printf 'failed to generate TLS key %s\n' "$key" >&2
-        return 1
-      fi
-    fi
-
-    chmod go+r "$key"
-
-    if [[ ! -e "$crt" ]]
-    then
-      rm --force "$ca"
-      openssl req -batch -new -x509 -days 10000 -key "$key" -out "$crt"
-    fi
-  done
-
-  if [[ ! -e "$ca" ]]
+  if [[ "$domainCrt" -nt "$chainCrt" ]] || [[ "$caCrt" -nt "$chainCrt" ]]
   then
-    cat "$baseDir"/.custom.crt "$baseDir"/.default.crt > "$ca"
+    cat "$domainCrt" "$caCrt" > "$chainCrt"
+    printf 'Created certificate chain for %s domain\n' "$domain"
   fi
+
+  chmod a=r "$chainCrt"
+
+  if [[ "$domainKey" -nt "$pem" ]] || [[ "$chainCrt" -nt "$pem" ]]
+  then
+    cat "$domainKey" "$chainCrt" > "$pem"
+    printf 'Created PEM for %s domain\n' "$domain"
+  fi
+
+  chmod a=r "$pem"
 }
 
 

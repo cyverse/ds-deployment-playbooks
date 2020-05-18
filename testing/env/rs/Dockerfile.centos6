@@ -17,7 +17,6 @@ ARG IRODS_IES=ies
 ARG IRODS_LAST_EPHEMERAL_PORT=20199
 ARG IRODS_NEGOTIATION_KEY=TEMPORARY_32byte_negotiation_key
 ARG IRODS_SCHEMA_VALIDATION=https://schemas.irods.org/configuration
-ARG IRODS_SSL_CA_CERTIFICATE_FILE=/etc/pki/tls/certs/irods-ca-bundle.pem
 ARG IRODS_SSL_CERTIFICATE_CHAIN_FILE=/etc/pki/tls/certs/server-chain.crt
 ARG IRODS_SSL_CERTIFICATE_KEY_FILE=/etc/pki/tls/private/server.key
 ARG IRODS_SSL_DH_PARAMS_FILE=/var/lib/irods/.irods/dhparams.pem
@@ -29,9 +28,8 @@ ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
 
-COPY .custom.key $IRODS_SSL_CERTIFICATE_KEY_FILE
-COPY .custom.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
-COPY .ca.pem $IRODS_SSL_CA_CERTIFICATE_FILE
+COPY .tls/custom.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .tls/custom-chain.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 
 RUN yum --assumeyes install \
       openssl python-pip python-requests python-virtualenv which \

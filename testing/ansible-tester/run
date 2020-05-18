@@ -13,7 +13,7 @@
 #  HOSTS      the inventory hosts to test against
 #
 # Envinroment Variables:
-#  CA_HOSTNAME      The unqualified hostname the CA server
+#  CA_NAME          The unqualified hostname the CA server
 #  DBMS_HOST        The FQDN of the PostgreSQL server to connect to
 #  ENV_NAME         The docker environment to join
 #  IRODS_IES_HOST   The FQDN of the iRODS IES to connect to
@@ -34,7 +34,7 @@ main()
              --env IRODS_HOST="$IRODS_IES_HOST" \
              --env IRODS_ZONE_NAME="$IRODS_ZONE_NAME" \
              --env PGHOST="$DBMS_HOST" \
-             --hostname="$CA_HOSTNAME" \
+             --hostname="$CA_NAME" \
              --network "$DOMAIN" \
              --volume "$playbooks":/playbooks-under-test:ro \
              ansible-tester "$doInspect" "$pretty" "$playbook" "$hosts"

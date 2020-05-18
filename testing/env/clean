@@ -25,15 +25,15 @@ resolve_exec()
 }
 
 
-readonly ExecName=$(resolve_exec "$0")
-
-
 main()
 {
   local cfg="$*"
 
+  local execName
+  execName=$(resolve_exec "$0")
+
   local baseDir
-  baseDir=$(dirname "$ExecName")
+  baseDir=$(dirname "$execName")
 
   if [[ -z "$cfg" ]]
   then
@@ -55,7 +55,7 @@ main()
     docker rmi "$repository"
   done < <(docker images --filter reference="$ENV_NAME"_* | tail --lines +2)
 
-  rm --force "$baseDir"/.default.* "$baseDir"/.custom.*
+  rm --force --recursive "$baseDir"/.tls
 }
 
 

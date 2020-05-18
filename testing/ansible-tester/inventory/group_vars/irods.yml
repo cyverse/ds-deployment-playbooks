@@ -18,7 +18,9 @@ irods_resource_hierarchies:
   - name: rs_centos6
   - name: rs_centos7
 irods_server_port_range_end: 20009
-irods_ssl_ca_certificate_file: /etc/pki/tls/certs/irods-ca-bundle.pem
+
+irods_ssl_certificate_chain_file: /etc/pki/tls/certs/dstesting_default-chain.crt
+irods_ssl_certificate_key_file: /etc/pki/tls/private/dstesting_default.key
 
 pire_resource_hierarchy:
   name: pireRes

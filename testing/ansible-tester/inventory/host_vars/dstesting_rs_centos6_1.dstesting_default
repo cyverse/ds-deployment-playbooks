@@ -6,6 +6,9 @@ irods_host_aliases:
   - alias-1
   - alias-2
 
+irods_ssl_certificate_chain_file: /etc/pki/tls/certs/custom-chain.crt
+irods_ssl_certificate_key_file: /etc/pki/tls/private/custom.key
+
 irods_storage_resources:
   - name: avra
     vault: /var/lib/irods/avra_vault
