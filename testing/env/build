@@ -29,7 +29,7 @@ resolve_exec()
 
 main()
 {
-  local cfg="$*"
+  local cfg="$1"
 
   local execName
   execName=$(resolve_exec "$0")
@@ -65,15 +65,15 @@ mk_cert_forms()
   local workDir="$1"
   local domain="$2"
 
-  local domainKey="$workDir"/"$domain".key
-  local domainCrt="$workDir"/"$domain".crt
-  local caCrt="$workDir"/ca.crt
-  local chainCrt="$workDir"/"$domain"-chain.crt
-  local pem="$workDir"/"$domain".pem
+  local domainKey="$workDir"/private/"$domain".key
+  local domainCrt="$workDir"/certs/"$domain".crt
+  local rootCrt="$workDir"/certs/root.crt
+  local chainCrt="$workDir"/certs/"$domain"-chain.crt
+  local pem="$workDir"/private/"$domain".pem
 
-  if [[ "$domainCrt" -nt "$chainCrt" ]] || [[ "$caCrt" -nt "$chainCrt" ]]
+  if [[ "$domainCrt" -nt "$chainCrt" ]] || [[ "$rootCrt" -nt "$chainCrt" ]]
   then
-    cat "$domainCrt" "$caCrt" > "$chainCrt"
+    cat "$domainCrt" "$rootCrt" > "$chainCrt"
     printf 'Created certificate chain for %s domain\n' "$domain"
   fi
 
@@ -89,4 +89,4 @@ mk_cert_forms()
 }
 
 
-main "$*"
+main "$@"

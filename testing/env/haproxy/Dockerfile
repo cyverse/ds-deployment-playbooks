@@ -9,4 +9,4 @@ COPY haproxy/config/iptables /etc/sysconfig
 
 ARG DOMAIN=dstesting_default
 
-COPY .tls/$DOMAIN.pem /etc/pki/tls/private/
+COPY .tls/private/$DOMAIN.pem /etc/pki/tls/private/

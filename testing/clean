@@ -7,19 +7,6 @@
 set -o errexit -o nounset -o pipefail
 
 
-resolve_exec()
-{
-  local exe="$0"
-
-  if [[ "$OSTYPE" == "darwin"* ]]
-  then
-    greadlink -f "$exe"
-  else
-    readlink --canonicalize "$exe"
-  fi
-}
-
-
 main()
 {
   local execName
@@ -31,7 +18,20 @@ main()
   "$baseDir"/ansible-tester/clean
   "$baseDir"/env/clean "$baseDir"/config.inc
 
-  rm --force --recursive "$baseDir"/ansible-tester/.pki "$baseDir"/.openssl.cnf
+  rm --force --recursive "$baseDir"/env/.tls "$baseDir"/ansible-tester/.tls "$baseDir"/.tls
+}
+
+
+resolve_exec()
+{
+  local exe="$1"
+
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    greadlink -f "$exe"
+  else
+    readlink --canonicalize "$exe"
+  fi
 }
 
 

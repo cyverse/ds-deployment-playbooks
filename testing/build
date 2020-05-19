@@ -19,32 +19,139 @@ main()
   # shellcheck disable=SC1090
   . "$baseDir"/config.inc
 
-  local sslTmpl="$baseDir"/openssl.tmpl
-  local buildSslCnf="$baseDir"/.openssl.cnf
-  local controlDir="$baseDir"/ansible-tester/.pki
-  local envDir="$baseDir"/env/.tls
+  mk_tls "$baseDir"
+  "$baseDir"/env/build "$baseDir"/config.inc
+  "$baseDir"/ansible-tester/build "$baseDir"/config.inc
+}
 
+
+mk_tls()
+{
+  local baseDir="$1"
+
+  local sslTmpl="$baseDir"/openssl.tmpl
+
+  local workDir="$baseDir"/.tls
+  local controlDir="$workDir"/control
+  local envDir="$workDir"/env
+
+  local buildSslCnf="$workDir"/openssl.cnf
   if [[ "$sslTmpl" -nt "$buildSslCnf" ]]
   then
-    rm --force --recursive "$controlDir" "$envDir"
+    rm --force --recursive "$workDir"
+    mkdir --parents "$workDir"
     sed 's|_CA_DIR_|'"$controlDir"'/CA|' "$sslTmpl" > "$buildSslCnf"
   fi
 
   if [[ "$baseDir"/config.inc -nt "$envDir" ]]
   then
-    rm --force --recursive "$controlDir" "$envDir"
+    rm --force --recursive "$envDir" "$controlDir"
+    mkdir --parents "$controlDir" "$envDir"
   fi
 
+  prep_ca "$baseDir" "$buildSslCnf" "$controlDir"
+  prep_tls "$buildSslCnf" "$envDir"
+
+  prep_env "$workDir" "$baseDir"/env/.tls
+  prep_control "$workDir" "$baseDir"/ansible-tester/.tls
+}
+
+
+prep_ca()
+{
+  local baseDir="$1"
+  local buildSslCnf="$2"
+  local controlDir="$3"
+
+  local controlSslCnf="$controlDir"/openssl.cnf
+  if [[ "$baseDir"/openssl.tmpl -nt "$controlSslCnf" ]]
+  then
+    rm --force --recursive "$controlDir"
+    mkdir --parents "$controlDir"
+    sed 's|_CA_DIR_|/etc/pki/CA|' "$baseDir"/openssl.tmpl > "$controlSslCnf"
+    printf 'Updated openssl.cnf for CA\n'
+  fi
+
+  local caDir="$controlDir"/CA
+  mkdir --parents "$caDir"/certs "$caDir"/newcerts "$caDir"/private
+
+  local caKey="$caDir"/private/ca.key
+  local caCrt="$caDir"/certs/ca.crt
+  local serial="$caDir"/serial
+  local index="$caDir"/index.txt
+  local idxAttr="$caDir"/index.txt.attr
+
+  if ! [[ -e "$caKey" ]]
+  then
+    rm --force "$caCrt" "$serial" "$index" "$idxAttr"
+    echo 1000 > "$serial"
+    touch "$index" "$idxAttr"
+    printf 'Reset CA DB\n'
+
+    if ! openssl genpkey -algorithm rsa -out "$caKey" 2> /dev/null
+    then
+      printf 'Failed to build private key for certificate authority\n' >&2
+      return 1
+    else
+      printf 'Recreated private key for CA\n'
+    fi
+  fi
+
+  chmod u=r "$caKey"
+
+  if [[ "$caKey" -nt "$caCrt" ]]
+  then
+    openssl req -new -sha256 -x509 \
+      -config "$buildSslCnf" \
+      -days 10000 \
+      -extensions v3_ca \
+      -key "$caKey" \
+      -out "$caCrt" \
+      -subj /CN="$CA_NAME"."$DOMAIN"
+
+    printf 'Recreated certificate for CA\n'
+  fi
+
+  chmod a=r "$caCrt"
+}
+
+
+prep_control()
+{
+  local mainDir="$1"
+  local controlDir="$2"
+
   mkdir --parents "$controlDir"
-  prep_ca "$buildSslCnf" "$controlDir"
+
+  local tlsDir="$controlDir"/tls
+  mkdir --parents "$tlsDir"
+
+  cp --force --update "$mainDir"/control/openssl.cnf "$tlsDir"/
+  cp --force --recursive --update "$mainDir"/control/CA "$controlDir"/
+  cp --force --recursive --update "$mainDir"/env/certs "$mainDir"/env/private "$tlsDir"/
+}
+
+
+prep_env()
+{
+  local mainDir="$1"
+  local envDir="$2"
 
   mkdir --parents "$envDir"
-  mk_tls_pair "$buildSslCnf" "$envDir" "$DOMAIN"
-  mk_tls_pair "$buildSslCnf" "$envDir" custom
+  cp --force --recursive --update "$mainDir"/env/certs "$mainDir"/env/private "$envDir"/
+  cp --force --update "$mainDir"/control/CA/certs/ca.crt "$envDir"/certs/root.crt
+}
 
-  cp --force --update $controlDir/CA/certs/ca.crt "$envDir"/
-  "$baseDir"/env/build "$baseDir"/config.inc
-  "$baseDir"/ansible-tester/build
+
+prep_tls()
+{
+  local sslCnf="$1"
+  local envDir="$2"
+
+  mkdir --parents "$envDir"/certs "$envDir"/private
+
+  mk_tls_pair "$sslCnf" "$envDir" "$DOMAIN"
+  mk_tls_pair "$sslCnf" "$envDir" custom
 }
 
 
@@ -54,9 +161,9 @@ mk_tls_pair()
   local tlsDir="$2"
   local domain="$3"
 
-  local domainKey="$tlsDir"/"$domain".key
+  local domainKey="$tlsDir"/private/"$domain".key
   local domainCsr="$tlsDir"/"$domain".csr
-  local domainCrt="$tlsDir"/"$domain".crt
+  local domainCrt="$tlsDir"/certs/"$domain".crt
 
   if ! [[ -e "$domainKey" ]]
   then
@@ -112,66 +219,9 @@ mk_tls_cert()
 }
 
 
-prep_ca()
-{
-  local buildSslCnf="$1"
-  local controlDir="$2"
-
-  local caDir="$controlDir"/CA
-  local controlSslCnf="$controlDir"/openssl.cnf
-  if [[ "$baseDir"/openssl.tmpl -nt "$controlSslCnf" ]]
-  then
-    rm --force --recursive "$caDir"
-    sed 's|_CA_DIR_|/etc/pki/CA|' "$baseDir"/openssl.tmpl > "$controlSslCnf"
-    printf 'Updated openssl.cnf for CA\n'
-  fi
-
-  mkdir --parents "$caDir"/certs "$caDir"/newcerts "$caDir"/private
-
-  local caKey="$caDir"/private/ca.key
-  local caCrt="$caDir"/certs/ca.crt
-  local serial="$caDir"/serial
-  local index="$caDir"/index.txt
-  local idxAttr="$caDir"/index.txt.attr
-
-  if ! [[ -e "$caKey" ]]
-  then
-    rm --force "$caCrt" "$serial" "$index" "$idxAttr"
-    echo 1000 > "$serial"
-    touch "$index" "$idxAttr"
-    printf 'Reset CA DB\n'
-
-    if ! openssl genpkey -algorithm rsa -out "$caKey" 2> /dev/null
-    then
-      printf 'Failed to build private key for certificate authority\n' >&2
-      return 1
-    else
-      printf 'Recreated private key for CA\n'
-    fi
-  fi
-
-  chmod u=r "$caKey"
-
-  if [[ "$caKey" -nt "$caCrt" ]]
-  then
-    openssl req -new -sha256 -x509 \
-      -config "$buildSslCnf" \
-      -days 10000 \
-      -extensions v3_ca \
-      -key "$caKey" \
-      -out "$caCrt" \
-      -subj /CN="$CA_NAME"."$DOMAIN"
-
-    printf 'Recreated certificate for CA\n'
-  fi
-
-  chmod a=r "$caCrt"
-}
-
-
 resolve_exec()
 {
-  local exe="$0"
+  local exe="$1"
 
   if [[ "$OSTYPE" == "darwin"* ]]
   then

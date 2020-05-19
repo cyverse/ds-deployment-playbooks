@@ -16,16 +16,14 @@ COPY test-playbook.sh /test-playbook
 RUN chmod --recursive go-rwx /root/.ssh
 RUN chmod u+x /test-playbook
 
-COPY inventory/* /inventory/
-COPY inventory/host_vars/* /inventory/host_vars/
-COPY inventory/group_vars/* /inventory/group_vars/
+COPY inventory/ /inventory/
 COPY wait-for-ready.yml /
 
 VOLUME /playbooks-under-test
 
 ### Set up certificate authority
-COPY .pki/openssl.cnf /etc/pki/tls/
-COPY .pki/CA/ /etc/pki/CA/
+COPY .tls/tls/openssl.cnf /etc/pki/tls/
+COPY .tls/CA/ /etc/pki/CA/
 
 ENV IRODS_HOST=ies
 ENV IRODS_PASSWORD=rods

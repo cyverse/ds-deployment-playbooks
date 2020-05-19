@@ -1,1 +1,2 @@
-.pki
+.tls
+inventory/group_vars/all/tls

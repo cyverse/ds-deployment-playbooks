@@ -2,6 +2,7 @@
 #
 # This script builds the ansible-tester image.
 
+set -e
 
 if [[ "$OSTYPE" == "darwin"* ]]
 then
@@ -12,13 +13,91 @@ fi
 
 main()
 {
+  local cfg="$1"
+
   local baseDir
   baseDir=$(dirname "$ExecName")
+
+  if [[ -z "$cfg" ]]
+  then
+    printf 'An environment variable include file is needed.\n' >&2
+    return 1
+  fi
+
+  if ! [[ "$cfg" =~ ^/ ]]
+  then
+    cfg="$(pwd)"/"$cfg"
+  fi
+
+  # shellcheck disable=SC1090
+  . "$cfg"
+
+  local caDir="$baseDir"/.tls/CA
+  local tlsDir="$baseDir"/.tls/tls
+
+  if tls_vars_need_update "$baseDir" "$caDir" "$tlsDir"
+  then
+    prep_tls_vars "$baseDir" "$caDir" "$tlsDir"
+  fi
 
   docker build --tag ansible-tester "$baseDir"
 }
 
 
-set -e
+prep_tls_vars()
+{
+  local baseDir="$1"
+  local caDir="$2"
+  local tlsDir="$3"
 
-main
+  cat <<EOF > "$baseDir"/inventory/group_vars/all/tls
+---
+tls_key_default: |
+$(prep_tls_val "$tlsDir"/private/"$DOMAIN".key)
+
+tls_cert_default: |
+$(prep_tls_val "$tlsDir"/certs/"$DOMAIN".crt)
+
+tls_key_custom: |
+$(prep_tls_val "$tlsDir"/private/custom.key)
+
+tls_cert_custom: |
+$(prep_tls_val "$tlsDir"/certs/custom.crt)
+
+tls_root_cert: |
+$(prep_tls_val "$caDir"/certs/ca.crt)
+EOF
+}
+
+
+prep_tls_val()
+{
+  local file="$1"
+
+  sed 's/^/  /' "$file"
+}
+
+
+tls_vars_need_update()
+{
+  local baseDir="$1"
+  local caDir="$2"
+  local tlsDir="$3"
+
+  local deps=( "$caDir"/certs/ca.crt \
+               "$tlsDir"/private/"$DOMAIN".key "$tlsDir"/certs/"$DOMAIN".crt \
+               "$tlsDir"/private/custom.key "$tlsDir"/certs/custom.crt )
+
+  for dep in "${deps[@]}"
+  do
+    if [[ "$dep" -nt "$baseDir"/inventory/group_vars/all/tls ]]
+    then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+
+main "$@"

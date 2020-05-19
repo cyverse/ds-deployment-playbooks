@@ -5,11 +5,19 @@
 
 main()
 {
+  local execName
+  execName=$(readlink --canonicalize "$0")
+
+  local baseDir
+  baseDir=$(dirname "$execName")
+
   if [ -n "$(docker images --filter reference=ansible-tester | tail --lines +2)" ]
   then
     docker rmi ansible-tester
   fi
+
+  rm --force --recursive "$baseDir"/.tls
 }
 
 
-main
+main "$@"

@@ -33,8 +33,8 @@ ARG IRODS_ZONE_PASSWORD=rods
 ARG IRODS_ZONE_PORT=1247
 ARG IRODS_ZONE_USER=rods
 
-COPY .tls/$DOMAIN.key $IRODS_SSL_CERTIFICATE_KEY_FILE
-COPY .tls/"$DOMAIN"-chain.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
+COPY .tls/private/$DOMAIN.key $IRODS_SSL_CERTIFICATE_KEY_FILE
+COPY .tls/certs/"$DOMAIN"-chain.crt $IRODS_SSL_CERTIFICATE_CHAIN_FILE
 
 RUN yum --assumeyes install \
       moreutils openssl python-virtualenv which \
