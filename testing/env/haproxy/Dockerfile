@@ -6,7 +6,3 @@ RUN yum install --assumeyes openssl python-pip rsyslog
 RUN pip --disable-pip-version-check install pyOpenSSL
 
 COPY haproxy/config/iptables /etc/sysconfig
-
-ARG DOMAIN=dstesting_default
-
-COPY .tls/private/$DOMAIN.pem /etc/pki/tls/private/
