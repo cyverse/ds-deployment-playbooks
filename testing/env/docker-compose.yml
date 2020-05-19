@@ -11,8 +11,6 @@ services:
     build:
       context: .
       dockerfile: apache/Dockerfile
-      args:
-        DOMAIN: "$DOMAIN"
 
   dbms:
     build:

@@ -137,6 +137,16 @@
   hosts: webdav
   become: true
   tasks:
+    - name: test TLS configured
+      stat:
+        path: "{{ item }}"
+      register: response
+      failed_when: not response.stat.exists
+      with_items:
+        - /etc/pki/tls/private/dstesting_default.key
+        - /etc/pki/tls/certs/dstesting_default.crt
+        - /etc/pki/tls/certs/ca.crt
+
     - include_tasks: tasks/test_pkg_installed.yml
       with_items:
         - mod_proxy_html
