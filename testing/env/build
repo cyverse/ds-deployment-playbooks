@@ -73,6 +73,7 @@ mk_cert_forms()
 
   if [[ "$domainCrt" -nt "$chainCrt" ]] || [[ "$rootCrt" -nt "$chainCrt" ]]
   then
+    rm --force "$chainCrt"
     cat "$domainCrt" "$rootCrt" > "$chainCrt"
     printf 'Created certificate chain for %s domain\n' "$domain"
   fi
@@ -81,6 +82,7 @@ mk_cert_forms()
 
   if [[ "$domainKey" -nt "$pem" ]] || [[ "$chainCrt" -nt "$pem" ]]
   then
+    rm --force "$pem"
     cat "$domainKey" "$chainCrt" > "$pem"
     printf 'Created PEM for %s domain\n' "$domain"
   fi
