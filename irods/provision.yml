@@ -27,6 +27,18 @@
         group: "{{ _irods_service_group_name }}"
         comment: iRODS Administrator
 
+    - name: install TLS key
+      when: _tls_key != ''
+      copy:
+        content: "{{ _tls_key }}"
+        dest: "{{ _irods_ssl_certificate_key_file }}"
+
+    - name: install TLS certificate chain
+      when: _tls_cert != ''
+      copy:
+        content: "{{_tls_cert }}{{ _tls_intermediate_certs }}"
+        dest: "{{ _irods_ssl_certificate_chain_file }}"
+
 
 - name: provision additional for IES
   hosts: ies
@@ -45,7 +57,7 @@
       with_items: "{{ _sysctl_kernel }}"
       tags:
         - no_testing
-        
+
 
 - import_playbook: update_hosts.yml
 

@@ -4,6 +4,10 @@
   become: true
   vars:
     group_name: "{{ 'irods_ies' if inventory_hostname in groups['ies'] else 'irods' }}"
+    tls_base_name: "{{
+      'custom' if inventory_hostname == 'dstesting_rs_centos6_1.dstesting_default' else
+      'dstesting_default' }}"
+
   tasks:
     - include_tasks: tasks/test_pkg_installed.yml
       vars:
@@ -20,6 +24,18 @@
     - name: verify that the system user has correct comment
       command: grep --quiet --regexp '^irods:[^:]*:[^:]*:[^:]*:iRODS Administrator:' /etc/passwd
       changed_when: false
+
+    - name: verify that default TLS key is installed
+      stat:
+        path: /etc/pki/tls/private/{{ tls_base_name }}.key
+      register: response
+      failed_when: not response.stat.exists
+
+    - name: verify that default TLS certificate chain is installed
+      stat:
+        path: /etc/pki/tls/certs/{{ tls_base_name }}-chain.crt
+      register: response
+      failed_when: not response.stat.exists
 
 
 - name: test provision additional for IES

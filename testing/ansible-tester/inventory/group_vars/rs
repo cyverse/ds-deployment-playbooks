@@ -1,5 +1,2 @@
 ---
 irods_default_vault: /var/lib/irods/Vault
-
-irods_ssl_certificate_chain_file: /etc/pki/tls/certs/rs.crt
-irods_ssl_certificate_key_file: /etc/pki/tls/private/rs.key

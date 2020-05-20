@@ -49,9 +49,6 @@ services:
       dockerfile: ies/Dockerfile.unconfigured
       args:
         DBMS_HOST: "$DBMS_HOST"
-        DOMAIN: "$DOMAIN"
-        IRODS_SSL_CERTIFICATE_CHAIN_FILE: "$IRODS_DEFAULT_TLS_CERT_CHAIN"
-        IRODS_SSL_CERTIFICATE_KEY_FILE: "$IRODS_DEFAULT_TLS_KEY"
         IRODS_SYSTEM_GROUP: "$IRODS_IES_SYSTEM_GROUP"
     hostname: "$IRODS_IES_UNCONF_HOST"
     tty: true
@@ -91,9 +88,6 @@ services:
       context: .
       dockerfile: rs/Dockerfile.centos7
       args:
-        DOMAIN: "$DOMAIN"
         IRODS_IES: "$IRODS_IES_HOST"
-        IRODS_SSL_CERTIFICATE_CHAIN_FILE: "$IRODS_DEFAULT_TLS_CERT_CHAIN"
-        IRODS_SSL_CERTIFICATE_KEY_FILE: "$IRODS_DEFAULT_TLS_KEY"
     hostname: "$IRODS_RS7_HOST"
     tty: true
