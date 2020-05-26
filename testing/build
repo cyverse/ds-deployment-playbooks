@@ -38,15 +38,20 @@ mk_tls()
   local buildSslCnf="$workDir"/openssl.cnf
   if [[ "$sslTmpl" -nt "$buildSslCnf" ]]
   then
-    rm --force --recursive "$workDir"
-    mkdir --parents "$workDir"
-    sed 's|_CA_DIR_|'"$controlDir"'/CA|' "$sslTmpl" > "$buildSslCnf"
-  fi
+    local tmpSslCnf
+    tmpSslCnf=$(mktemp)
 
-  if [[ "$baseDir"/config.inc -nt "$envDir" ]]
-  then
-    rm --force --recursive "$envDir" "$controlDir"
-    mkdir --parents "$controlDir" "$envDir"
+    sed 's|_CA_DIR_|'"$controlDir"'/CA|' "$sslTmpl" > "$tmpSslCnf"
+
+    if ! diff --brief "$tmpSslCnf" "$buildSslCnf" &> /dev/null
+    then
+      rm --force --recursive "$workDir"
+      mkdir --parents "$workDir"
+      mv "$tmpSslCnf" "$buildSslCnf"
+    else
+      rm --force "$tmpSslCnf"
+      touch "$buildSslCnf"
+    fi
   fi
 
   prep_ca "$baseDir" "$buildSslCnf" "$controlDir"
@@ -99,7 +104,7 @@ prep_ca()
 
   chmod u=r "$caKey"
 
-  if [[ "$caKey" -nt "$caCrt" ]]
+  if [[ "$caKey" -nt "$caCrt" ]] || ! correct_cn "$caCrt" "$CA_NAME"."$DOMAIN"
   then
     openssl req -new -sha256 -x509 \
       -config "$buildSslCnf" \
@@ -113,6 +118,18 @@ prep_ca()
   fi
 
   chmod a=r "$caCrt"
+}
+
+
+correct_cn()
+{
+  local crt="$1"
+  local cn="$2"
+
+  local subj
+  subj=$(openssl x509 -noout -subject -in "$crt")
+
+  test "$subj" = "subject=CN = $cn"
 }
 
 
@@ -147,6 +164,11 @@ prep_tls()
 {
   local sslCnf="$1"
   local envDir="$2"
+
+  if ! [[ -e "$envDir"/private/"$DOMAIN".key ]]
+  then
+    rm --force --recursive "$envDir"
+  fi
 
   mkdir --parents "$envDir"/certs "$envDir"/private
 
