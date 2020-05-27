@@ -38,6 +38,11 @@ mk_tls()
   local buildSslCnf="$workDir"/openssl.cnf
   if [[ "$sslTmpl" -nt "$buildSslCnf" ]]
   then
+    # Since switching branches in git possibly changes the modification time of
+    # openssl.tmpl, the template is instantiated and compared with the existing
+    # instatiation. If there was no existing instantiation or it is different
+    # from the new one, the only instantiation is replaced with the new one, and
+    # the previous TLS products are all deleted. 
     local tmpSslCnf
     tmpSslCnf=$(mktemp)
 
@@ -219,8 +224,6 @@ mk_tls_pair()
       printf 'Created certificate for %s domain\n' "$domain"
     fi
   fi
-
-  chmod a=r "$domainCrt"
 }
 
 
@@ -230,6 +233,8 @@ mk_tls_cert()
   local csr="$2"
   local crt="$3"
 
+  rm --force "$crt"
+
   openssl ca -batch -notext \
       -config "$sslCnf" \
       -days 10000 \
@@ -238,6 +243,8 @@ mk_tls_cert()
       -md sha256 \
       -out "$crt" \
     2> /dev/null
+
+  chmod a=r "$crt"
 }
 
 
