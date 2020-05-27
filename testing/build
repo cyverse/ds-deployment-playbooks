@@ -5,7 +5,7 @@
 
 set -o errexit -o nounset -o pipefail
 
-export DOMAIN
+export CA_NAME DOMAIN
 
 
 main()
