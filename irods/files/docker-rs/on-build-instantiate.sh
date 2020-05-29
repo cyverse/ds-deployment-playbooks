@@ -22,7 +22,7 @@
 #                     communicate with this server
 # IRODS_STORAGE_RES   the unix file system resource to server
 
-set -e
+set -o errexit -o nounset -o pipefail
 
 
 main()

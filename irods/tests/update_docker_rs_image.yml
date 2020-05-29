@@ -37,7 +37,37 @@
       register: response
       failed_when: not response.stat.exists or not response.stat.isdir
 
-    - name: test add common command scripts
+    - name: test add calliope-ingest command script
+      stat:
+        path: /tmp/cmd/calliope-ingest
+      register: response
+      failed_when: not response.stat.exists
+
+    - name: test add de-archive-data command script
+      debug:
+        msg: TODO implement
+
+    - name: test add de-create-collection command script
+      debug:
+        msg: TODO implement
+
+    - name: test add delete-scheduled-rule command script
+      debug:
+        msg: TODO implement
+
+    - name: test add generateuuid command script
+      debug:
+        msg: TODO implement
+
+    - name: test add rm-trash command script
+      debug:
+        msg: TODO implement
+
+    - name: test add set-uuid command script
+      debug:
+        msg: TODO implement
+
+    - name: test add sparcd-ingest command script
       debug:
         msg: TODO implement
 

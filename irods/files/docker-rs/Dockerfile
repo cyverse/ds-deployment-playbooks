@@ -49,8 +49,8 @@ RUN chmod --recursive ug+r /var/lib/irods && \
 COPY --chown=irods:irods periphery.sh /periphery
 RUN chmod ug+x /periphery
 
-VOLUME /etc/irods/server-chain.crt
-VOLUME /etc/irods/server.key
+VOLUME /var/lib/irods/.irods/server-chain.crt
+VOLUME /var/lib/irods/.irods/server.key
 VOLUME /var/lib/irods/iRODS/server/log
 VOLUME /var/lib/irods/iRODS/server/log/proc
 
