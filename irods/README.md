@@ -103,6 +103,7 @@ Variable                                   | Default                            
 `tls_cert`                                 |                                      |         | The TLS certificate contents. If this is undefined or empty, it is assumed the certificate file is provided externally.
 `tls_intermediate_certs`                   |                                      |         | The TLS certificate chain contents for the provider of the `tls_cert` and `tls_key`. If this is undefined or empty, it is assumed the chain file is provided externally.
 `tls_key`                                  |                                      |         | The TLS private key contents. If this is undefined or empty, it is assumed the key file is provided externally.
+`webdav_allowed_src`                       | `[ "0.0.0.0/0" ]`                    |         | A list of network/masks for the clients allowed direct access to the WebDAV servers
 `webdav_auth_name`                         | CyVerse                              |         | Authorization realm to use for the Data Store
 `webdav_cache_dir`                         | `/var/cache/httpd/proxy`             |         | the directory apache will use for the WebDAV cache
 `webdav_cache_max_file_size`               | 1                                    |         | the maximum size in mebibytes of the largest WebDAV file apache will cache

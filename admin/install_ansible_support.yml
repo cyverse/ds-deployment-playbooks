@@ -33,7 +33,6 @@
               'python-pip' }}"
         - python-requests
         - python-virtualenv
-        - "{{ 'python-selinux' if ansible_distribution == 'Debian' else 'libselinux-python' }}"
 
     - name: install python-apt on Debian machines
       when: ansible_distribution == 'Debian'

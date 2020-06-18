@@ -9,10 +9,24 @@
         commons_max_cache_expire: 8760
         apache_ssl_cipher_suite: "HIGH:3DES:!aNULL:!MD5:!SEED:!IDEA"
         apache_global_vhost_settings: |
-          LoadModule log_forensic_module modules/mod_log_forensic.so
-          LoadModule proxy_html_module modules/mod_proxy_html.so
-          LoadModule sed_module modules/mod_sed.so
-          LoadModule unique_id_module modules/mod_unique_id.so
+          <IfModule !log_forensic_module>
+            LoadModule log_forensic_module modules/mod_log_forensic.so
+          </IfModule>
+
+          <IfModule !proxy_html_module>
+            LoadModule proxy_html_module modules/mod_proxy_html.so
+          </IfModule>
+
+          <IfModule !sed_module>
+            LoadModule sed_module modules/mod_sed.so
+          </IfModule>
+
+          <IfModule !unique_id_module>
+            LoadModule unique_id_module modules/mod_unique_id.so
+          </IfModule>
+
+          ForensicLog logs/forensic_log
+          ErrorLogFormat "%{cu}t [%-m:%l] [pid %P] %-a %E: %M"
 
           CacheRoot {{ _webdav_cache_dir }}
           CacheDirLevels 2
@@ -45,7 +59,6 @@
             listen_ip: 127.0.0.1
             extra_parameters: |
               ErrorLog logs/error_log
-              ForensicLog logs/forensic_log
               CustomLog logs/access_log "%t %h \"%r\" %>s %b %D %L %{forensic-id}n"
               CustomLog logs/cache_log "%t %h \"%r\" %{cache-status}e %{forensic-id}n"
               LogLevel warn
@@ -288,8 +301,10 @@
         insertbefore: -A INPUT -j REJECT
         marker: "# {mark} DS MANAGED BLOCK (webdav)"
         content: |
-          -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT
-          -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT
+          {% for i in _webdav_allowed_src %}
+          -A INPUT -m state --state NEW -p tcp -s {{ i }} --dport 80 -j ACCEPT
+          -A INPUT -m state --state NEW -p tcp -s {{ i }} --dport 443 -j ACCEPT
+          {% endfor %}
       notify: restart firewall
 
   handlers:
