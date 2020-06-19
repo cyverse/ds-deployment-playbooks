@@ -49,8 +49,6 @@ RUN chmod --recursive ug+r /var/lib/irods && \
 COPY --chown=irods:irods periphery.sh /periphery
 RUN chmod ug+x /periphery
 
-VOLUME /var/lib/irods/.irods/server-chain.crt
-VOLUME /var/lib/irods/.irods/server.key
 VOLUME /var/lib/irods/iRODS/server/log
 VOLUME /var/lib/irods/iRODS/server/log/proc
 
@@ -71,6 +69,10 @@ ONBUILD ARG IRODS_DEFAULT_RES=CyVerseRes
 ONBUILD ARG IRODS_HOST_UID
 ONBUILD ARG IRODS_RES_SERVER
 ONBUILD ARG IRODS_STORAGE_RES
+
+# NB:If thee are defined in the baee image, docker thinks they are directories.
+ONBUILD VOLUME /var/lib/irods/.irods/server-chain.crt
+ONBUILD VOLUME /var/lib/irods/.irods/server.key
 
 ONBUILD RUN /on-build-instantiate && \
             rm --force /on-build-instantiate
