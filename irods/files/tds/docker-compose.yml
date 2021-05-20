@@ -1,0 +1,20 @@
+---
+version: '3.7'
+
+services:
+  thredds:
+    image: unidata/thredds-docker:4.6.15
+    ports:
+      - "80:8080"
+      - "443:8443"
+      - "8443:8443"
+    container_name: thredds
+    volumes:
+      - /var/lib/thredds/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
+      - /var/log/thredds/:/usr/local/tomcat/logs/
+      - /var/log/thredds/:/usr/local/tomcat/content/thredds/logs/
+      - /var/lib/thredds/content:/usr/local/tomcat/content/thredds
+      - /mnt/ds-dev-rs-2:/usr/local/tomcat/content/thredds/public
+      - /mnt/ds-dev-rs-2/home/shared:/usr/local/tomcat/content/thredds/projects
+    env_file:
+      - compose.env

@@ -1,44 +1,74 @@
 ---
-### iRODS ###
-# set default_file_mode to 640 in server_config.json
-
 ### DOCKER ###
-# sudo yum install docker
-# sudo echo '{ "group": "dockerroot" }' > /etc/docker/daemon.json
-# sudo systemctl enable docker
-# sudo systemctl start docker
+#sudo yum install docker
+#sudo -i; echo '{ "group": "dockerroot" }' > /etc/docker/daemon.json; exit
+#sudo systemctl enable docker
+#sudo systemctl start docker
 
 ### DOCKER-COMPOSE ###
-# sudo yum install python3-pip
-# sudo useradd --create-home --system \
-#   --comment 'THREDDS service' --home-dir /var/lib/thredds --groups dockerroot,irods \
-#   thredds
-# sudo --user thredds pip3 install --user docker-compose
+#sudo yum install python3-pip
+#sudo useradd --create-home --system \
+#  --comment 'THREDDS service' --home-dir /var/lib/thredds --groups dockerroot,irods \
+#  thredds
+#sudo --user thredds pip3 install --user docker-compose
 
 ### THREDDS ###
-# scp compose.env thredds@ds-dev-rs-2:/var/lib/thredds/.
-# sudo mkdir -p /var/log/thredds
-# sudo chown thredds:thredds /var/log/thredds
-# sudo --user thredds ln --symbolic /var/log/thredds /var/lib/thredds/logs
-# scp tomcat-users.xml thredds@ds-dev-rs-2:/var/lib/thredds/.
-# sudo --user thredds mkdir --parents /var/lib/thredds/content
-# scp threddsConfig.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
-# scp wmsConfig.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
-# scp catalog.xml thredds@ds-dev-rs-2:/var/lib/thredds/content/.
-# sudo --user irods mkdir --parents /mnt/ds-dev-rs-2/home/shared/terraref
-# sudo --user thredds mkdir --parents /var/lib/thredds/data
-# sudo --user thredds ln --symbolic /mnt/ds-dev-rs-2 /var/lib/thredds/data/iplant
-# sudo --user echo 'export THREDDS_COMPOSE_ENV_LOCAL=' >> /var/lib/thredds/.bash_profile
-# scp docker-compose.yml /var/lib/thredds
+#scp files/tds/compose.env thredds@ds-dev-rs-2:/var/lib/thredds/.
+#sudo mkdir -p /var/log/thredds
+#sudo chown thredds:thredds /var/log/thredds
+#scp files/tds/tomcat-users.xml thredds@ds-dev-rs-2:/var/lib/thredds/.
+#sudo --user thredds mkdir --parents /var/lib/thredds/content
 
-# TODO get it to show data sets, i.e. adjust catalog.xml
+#scp files/tds/content/ thredds@ds-dev-rs-2:/var/lib/thredds/content/
+# TODO Configure threddsConfig.xml
+# TODO Configure wmsConfig.xml
+# TODO Configure enhancedCatalog.xml
+# TODO Configure catalog.xml
 
-# TODO set up log rotation
-#   ??? logrotate or logadm ???
+#sudo --user irods mkdir --parents /mnt/ds-dev-rs-2/home/shared/terraref
+#sudo --user thredds ln --symbolic /mnt /var/lib/thredds/data
+#scp docker-compose.yml /var/lib/thredds
 
-# sudo --user thredds docker-compose up -d
+# docker is giving thredds ownership of /mnt :(
+#   It's the entrypoint.sh script inheriteed from  unidata/tomcat-docker
+#   /mnt should be owned by root and /mnt/ds-dev-rs-2 owned by irods:irods
+#   One solution would be to set TOMCAT_USER_ID and TOMCAT_GROUP_ID to be the UID and GID of the
+#   irods user om the compose.env file
+
+# Having docker container chown stuff to irods takes away thredds user permission, so make sure
+# every user full access
+
+#sudo --user thredds chmod -R a+rw /var/lib/thredds
+
+# NOTE: datasetRoot is required to for dataset elements, but it cannot be used for datasetScan
+#   elements.
+#NOTE: The catalog dataset URL should be cyverse.dev/home/shared/terraref/public
+
+TODO get web based configuration and monitoring working
+     its not recognizing the password. What is the password? Is TLS required?
 
 # TODO work with David to tune the configuration.
+
+# TODO review logs for errors to fix
+
+# NOTE: Will use logrotate, because it is more standard.
+# sudo yum install logrotate
+# TODO set up log rotation
+#   List of log files:
+#     cache.log
+#     catalina.YYYY-MM-DD.log
+#     catalogInit.log
+#     featureCollectionScan.log
+#     fmrc.log
+#     host-manager.YYYY-MM-DD.log
+#     httpout.log
+#     localhost.YYYY-MM-DD.log
+#     localhost_access_log.YYYY-MM-DD.txt
+#     manager.YYYY-MM-DD.log
+#     serverStartup.log
+#     threddsServlet.log and threddsServlet.YYYY-MM-DD-hh.log
+
+# sudo --user thredds docker-compose up -d
 
 # TODO consider security
 #   See https://www.unidata.ucar.edu/software/tds/v4.3/tds4.2/tutorial/Security.html
